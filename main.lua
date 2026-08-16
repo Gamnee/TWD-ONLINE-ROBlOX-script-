@@ -16,7 +16,7 @@ local Settings = {
     FOVThickness = 2,            
     FOVColor = Color3.fromRGB(255, 255, 255),
     JumpPowerVal = 100,
-    BackgroundImageId = "rbxassetid://6031094678" -- เปลี่ยนเลข Decal ID รูปภาพพื้นหลังตรงนี้ได้ตามต้องการ
+    BackgroundImageId = "rbxassetid://6031094678"
 }
 
 local Features = {
@@ -27,7 +27,6 @@ local Features = {
     HighJump = { Enabled = false, Key = Enum.KeyCode.T }
 }
 
--- สีสำหรับ ESP
 _G.FriendColor  = Color3.fromRGB(0, 150, 255)
 _G.EnemyColor   = Color3.fromRGB(255, 0, 0)
 _G.VehicleColor = Color3.fromRGB(255, 170, 0)
@@ -315,7 +314,7 @@ LocalPlayer.CharacterAdded:Connect(function(char)
 end)
 
 --------------------------------------------------------------------
--- 📌 4. สร้างหน้าต่าง GUI หลัก + Chat Head "X" + ระบบแยกแท็บซ้าย 2 อัน
+-- 📌 4. สร้างหน้าต่าง GUI หลัก + Chat Head "G" + ระบบแยกแท็บซ้าย 2 อัน
 --------------------------------------------------------------------
 if PlayerGui:FindFirstChild("GaneInwzaHub") then PlayerGui.GaneInwzaHub:Destroy() end
 
@@ -324,13 +323,13 @@ ScreenGui.Name = "GaneInwzaHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- ปุ่มตัว X (Chat Head)
+-- ปุ่มตัว G (Chat Head)
 local ChatHead = Instance.new("TextButton")
 ChatHead.Name = "ChatHead"
 ChatHead.Size = UDim2.new(0, 48, 0, 48)
 ChatHead.Position = UDim2.new(0, 30, 0.5, -24)
 ChatHead.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-ChatHead.Text = "X"
+ChatHead.Text = "G"
 ChatHead.TextColor3 = Color3.fromRGB(255, 45, 85)
 ChatHead.TextSize = 24
 ChatHead.Font = Enum.Font.GothamBold
@@ -360,18 +359,18 @@ ChatHead.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- 🖼️ รูปภาพพื้นหลังเมนูหลัก (Image Background)
+-- 🖼️ รูปภาพพื้นหลังเมนูหลัก
 local BgImage = Instance.new("ImageLabel")
 BgImage.Name = "BackgroundImage"
 BgImage.Size = UDim2.new(1, 0, 1, 0)
 BgImage.BackgroundTransparency = 1
 BgImage.Image = Settings.BackgroundImageId
 BgImage.ScaleType = Enum.ScaleType.Crop
-BgImage.ImageTransparency = 0.4 -- ปรับความโปร่งใสของรูปพื้นหลังได้ที่นี่ (0 = ชัดสุด, 1 = ใสล่องหน)
+BgImage.ImageTransparency = 0.4
 BgImage.ZIndex = 0
 BgImage.Parent = MainFrame
 
--- เงาทับหลังรูปเพื่อให้เมนูกลืนกับข้อความอ่านง่าย
+-- เงาทับหลังรูป
 local BgOverlay = Instance.new("Frame")
 BgOverlay.Size = UDim2.new(1, 0, 1, 0)
 BgOverlay.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
@@ -410,6 +409,7 @@ ContainerMain.Position = UDim2.new(0, 155, 0, 10)
 ContainerMain.BackgroundTransparency = 1
 ContainerMain.BorderSizePixel = 0
 ContainerMain.ScrollBarThickness = 4
+ContainerMain.CanvasSize = UDim2.new(0, 0, 0, 420) -- กำหนดขนาดพื้นที่เลื่อนให้พอดีกับฟีเจอร์ทั้งหมด
 ContainerMain.Visible = true
 ContainerMain.ZIndex = 2
 ContainerMain.Parent = MainFrame
@@ -426,6 +426,7 @@ ContainerTheme.Position = UDim2.new(0, 155, 0, 10)
 ContainerTheme.BackgroundTransparency = 1
 ContainerTheme.BorderSizePixel = 0
 ContainerTheme.ScrollBarThickness = 4
+ContainerTheme.CanvasSize = UDim2.new(0, 0, 0, 300)
 ContainerTheme.Visible = false
 ContainerTheme.ZIndex = 2
 ContainerTheme.Parent = MainFrame
@@ -619,7 +620,6 @@ ThemeHeader.Font = Enum.Font.GothamBold
 ThemeHeader.TextXAlignment = Enum.TextXAlignment.Left
 ThemeHeader.Parent = ContainerTheme
 
--- ปุ่มเลือกสไตล์รูปภาพพื้นหลังสำเร็จรูปเท่ๆ
 local bgPresets = {
     {Name = "Cyberpunk City", Id = "rbxassetid://6031094678"},
     {Name = "Dark Nebula", Id = "rbxassetid://6023426915"},
@@ -645,7 +645,6 @@ for _, preset in ipairs(bgPresets) do
     end)
 end
 
--- ตัวปรับความโปร่งใสของรูปพื้นหลัง
 createSlider("Background Opacity", 0, 10, 4, function(val)
     BgImage.ImageTransparency = val / 10
 end, ContainerTheme)
