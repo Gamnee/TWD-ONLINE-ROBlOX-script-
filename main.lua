@@ -8,8 +8,9 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
 --------------------------------------------------------------------
--- 📌 0. ระบบภาษา (Language Translation Table)
+-- 📌 0. ระบบภาษา
 --------------------------------------------------------------------
+
 local CurrentLanguage = "TH"
 
 local LangText = {
@@ -35,6 +36,7 @@ local LangText = {
         MenuKey = "ปุ่มซ่อน/แสดงเมนู",
         ESPColor = "สีไฮไลท์ศัตรู"
     },
+
     EN = {
         HubTitle = "Gane inwza",
         TabMain = "Main",
@@ -60,27 +62,58 @@ local LangText = {
 }
 
 --------------------------------------------------------------------
--- 📌 1. ตารางตั้งค่าระบบ (Settings & Features Table)
+-- 📌 1. Settings
 --------------------------------------------------------------------
+
 local Settings = {
     TargetPart = "Head",
-    FOVRadius = 150,
-    FOVThickness = 2,
+
+    -- ⭐ เพิ่ม FOV ให้ใหญ่ขึ้น
+    FOVRadius = 250,
+
+    -- ⭐ ความหนาเริ่มต้น
+    FOVThickness = 3,
+
     FOVColor = Color3.fromRGB(255, 255, 255),
+
     JumpPowerVal = 100,
+
     MenuToggleKey = Enum.KeyCode.Period,
+
     ESPHighlightMode = "Red"
 }
 
 local Features = {
-    ESP = { Enabled = false, Key = Enum.KeyCode.G },
-    VehicleESP = { Enabled = false, Key = Enum.KeyCode.J },
-    Fullbright = { Enabled = false, Key = Enum.KeyCode.N },
-    TargetLock = { Enabled = false, Key = Enum.KeyCode.P },
-    HighJump = { Enabled = false, Key = Enum.KeyCode.T }
+    ESP = {
+        Enabled = false,
+        Key = Enum.KeyCode.G
+    },
+
+    VehicleESP = {
+        Enabled = false,
+        Key = Enum.KeyCode.J
+    },
+
+    Fullbright = {
+        Enabled = false,
+        Key = Enum.KeyCode.N
+    },
+
+    TargetLock = {
+        Enabled = false,
+        Key = Enum.KeyCode.P
+    },
+
+    HighJump = {
+        Enabled = false,
+        Key = Enum.KeyCode.T
+    }
 }
 
--- รายชื่อสถานที่สำหรับเทเลพอร์ต
+--------------------------------------------------------------------
+-- 📌 Teleport Locations
+--------------------------------------------------------------------
+
 local TeleportLocations = {
     {
         Name = "Woodbury",
@@ -114,7 +147,7 @@ local TeleportLocations = {
             1,
             7.63204113e-08,
             -0.687200427,
-            -6.33843129e-08,
+            -6.33847629e-08,
             0.726467907
         ),
         Color = Color3.fromRGB(255, 215, 0)
@@ -241,13 +274,20 @@ local TeleportLocations = {
     }
 }
 
+--------------------------------------------------------------------
+-- 📌 สี
+--------------------------------------------------------------------
+
 _G.FriendColor = Color3.fromRGB(0, 150, 255)
 _G.VehicleColor = Color3.fromRGB(255, 170, 0)
+
+-- ⭐ ปิดการใช้ TeamColor เพื่อไม่ให้สีฟ้ามาทับสี ESP
 _G.UseTeamColor = false
 
 --------------------------------------------------------------------
--- 📌 ESP COLOR
+-- 📌 ฟังก์ชันสี ESP
 --------------------------------------------------------------------
+
 local function getEnemyColor()
     local mode = Settings.ESPHighlightMode
 
@@ -272,35 +312,34 @@ local function getEnemyColor()
 end
 
 --------------------------------------------------------------------
--- 📌 FIX: สีศัตรูจะไม่โดน TeamColor บังคับเป็นสีฟ้า
+-- 📌 Jump Settings
 --------------------------------------------------------------------
-local function getESPColor(v)
-    if v == LocalPlayer then
-        return Color3.fromRGB(255, 255, 255)
-    end
 
-    return getEnemyColor()
-end
-
---------------------------------------------------------------------
--- 📌 High Jump Original Values
---------------------------------------------------------------------
 local originalJumpPower = 50
 local originalUseJumpPower = true
 local hasSavedOriginalJump = false
 
 local function saveOriginalValues(humanoid)
-    if not humanoid or not humanoid:IsA("Humanoid") or hasSavedOriginalJump then
+
+    if not humanoid
+        or not humanoid:IsA("Humanoid")
+        or hasSavedOriginalJump then
         return
     end
 
     local success, useJumpPower, jumpPower = pcall(function()
-        return humanoid.UseJumpPower, humanoid.JumpPower
+        return humanoid.UseJumpPower,
+        humanoid.JumpPower
     end)
 
-    if success and typeof(useJumpPower) == "boolean" and typeof(jumpPower) == "number" then
+    if success
+        and typeof(useJumpPower) == "boolean"
+        and typeof(jumpPower) == "number" then
+
         originalUseJumpPower = useJumpPower
-        originalJumpPower = jumpPower > 0 and jumpPower or 50
+        originalJumpPower =
+            jumpPower > 0 and jumpPower or 50
+
     else
         originalUseJumpPower = true
         originalJumpPower = 50
@@ -310,8 +349,9 @@ local function saveOriginalValues(humanoid)
 end
 
 --------------------------------------------------------------------
--- 📌 2. สร้าง UI FOV Circle
+-- 📌 FOV Circle
 --------------------------------------------------------------------
+
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 if PlayerGui:FindFirstChild("FOVCircleGui") then
@@ -321,18 +361,29 @@ end
 local FOVGui = Instance.new("ScreenGui")
 FOVGui.Name = "FOVCircleGui"
 FOVGui.ResetOnSpawn = false
+FOVGui.IgnoreGuiInset = true
 FOVGui.Parent = PlayerGui
 
 local FOVFrame = Instance.new("Frame")
 FOVFrame.Name = "CircleFrame"
+
 FOVFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-FOVFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+FOVFrame.Position = UDim2.new(
+    0.5,
+    0,
+    0.5,
+    0
+)
+
+-- ⭐ ใหญ่ขึ้น
 FOVFrame.Size = UDim2.new(
     0,
     Settings.FOVRadius * 2,
     0,
     Settings.FOVRadius * 2
 )
+
 FOVFrame.BackgroundTransparency = 1
 FOVFrame.Visible = false
 FOVFrame.Parent = FOVGui
@@ -340,7 +391,7 @@ FOVFrame.Parent = FOVGui
 local FOVStroke = Instance.new("UIStroke")
 FOVStroke.Thickness = Settings.FOVThickness
 FOVStroke.Color = Settings.FOVColor
-FOVStroke.Transparency = 0.3
+FOVStroke.Transparency = 0.15
 FOVStroke.Parent = FOVFrame
 
 local FOVCorner = Instance.new("UICorner")
@@ -348,6 +399,7 @@ FOVCorner.CornerRadius = UDim.new(1, 0)
 FOVCorner.Parent = FOVFrame
 
 local function updateFOVCircle()
+
     FOVFrame.Size = UDim2.new(
         0,
         Settings.FOVRadius * 2,
@@ -355,15 +407,23 @@ local function updateFOVCircle()
         Settings.FOVRadius * 2
     )
 
-    FOVStroke.Thickness = Settings.FOVThickness
-    FOVStroke.Color = Settings.FOVColor
-    FOVStroke.Enabled = Settings.FOVThickness > 0
-    FOVFrame.Visible = Features.TargetLock.Enabled
+    FOVStroke.Thickness =
+        Settings.FOVThickness
+
+    FOVStroke.Color =
+        Settings.FOVColor
+
+    FOVStroke.Enabled =
+        Settings.FOVThickness > 0
+
+    FOVFrame.Visible =
+        Features.TargetLock.Enabled
 end
 
 --------------------------------------------------------------------
--- 📌 3. PLAYER ESP
+-- 📌 Player ESP
 --------------------------------------------------------------------
+
 if game.CoreGui:FindFirstChild("ESP") then
     game.CoreGui.ESP:Destroy()
 end
@@ -372,118 +432,201 @@ local ESPHolder = Instance.new("Folder")
 ESPHolder.Name = "ESP"
 ESPHolder.Parent = game.CoreGui
 
+--------------------------------------------------------------------
+-- NameTag Template
+--------------------------------------------------------------------
+
 local NameTagTemplate = Instance.new("BillboardGui")
+
 NameTagTemplate.Name = "NameTag"
-NameTagTemplate.Size = UDim2.new(0, 200, 0, 50)
+
+NameTagTemplate.Size =
+    UDim2.new(0, 200, 0, 50)
+
 NameTagTemplate.AlwaysOnTop = true
-NameTagTemplate.StudsOffset = Vector3.new(0, 1.8, 0)
+
+NameTagTemplate.StudsOffset =
+    Vector3.new(0, 2.2, 0)
 
 local Tag = Instance.new("TextLabel")
+
 Tag.Name = "Tag"
+
 Tag.BackgroundTransparency = 1
-Tag.Position = UDim2.new(0, -50, 0, 0)
-Tag.Size = UDim2.new(0, 300, 0, 20)
+
+Tag.Position =
+    UDim2.new(0, -50, 0, 0)
+
+Tag.Size =
+    UDim2.new(0, 300, 0, 20)
+
 Tag.TextSize = 15
-Tag.TextColor3 = Color3.new(1, 1, 1)
-Tag.TextStrokeColor3 = Color3.new(0, 0, 0)
-Tag.TextStrokeTransparency = 0.4
-Tag.Font = Enum.Font.SourceSansBold
+
+Tag.TextColor3 =
+    Color3.new(1, 1, 1)
+
+Tag.TextStrokeColor3 =
+    Color3.new(0, 0, 0)
+
+Tag.TextStrokeTransparency = 0.2
+
+Tag.Font =
+    Enum.Font.SourceSansBold
+
 Tag.Parent = NameTagTemplate
 
 --------------------------------------------------------------------
--- 📌 FIXED ESP
--- สีเดียวกันทั้ง Highlight และชื่อ
+-- ⭐ ฟังก์ชันสีใหม่
+--
+-- จุดสำคัญ:
+-- ไม่เอา TeamColor มาทับสี ESP
+-- สีที่เลือกใน ESPColor จะถูกใช้ทั้ง
+-- Highlight + NameTag
 --------------------------------------------------------------------
+
+local function getESPColor(player)
+
+    -- ⭐ ตัวเราเองใช้สีฟ้า
+    if player == LocalPlayer then
+        return Color3.fromRGB(0, 150, 255)
+    end
+
+    -- ⭐ ผู้เล่นอื่นใช้สีที่เลือก
+    return getEnemyColor()
+end
+
+--------------------------------------------------------------------
+-- ⭐ Update ESP
+--------------------------------------------------------------------
+
 local function updateESP()
-    for _, v in pairs(Players:GetPlayers()) do
 
-        if v.Character then
+    for _, player in ipairs(Players:GetPlayers()) do
 
-            local head = v.Character:FindFirstChild("Head")
+        local character = player.Character
 
-            if v ~= LocalPlayer then
+        if character then
 
-                -- สีจากเมนู ESP Color
-                local color = getESPColor(v)
+            local head =
+                character:FindFirstChild("Head")
 
-                ----------------------------------------------------
-                -- Highlight
-                ----------------------------------------------------
-                local highlight = v.Character:FindFirstChild("GetReal")
+            local color =
+                getESPColor(player)
 
-                if Features.ESP.Enabled then
+            --------------------------------------------------------
+            -- Highlight
+            --------------------------------------------------------
 
-                    if not highlight then
-                        highlight = Instance.new("Highlight")
-                        highlight.Name = "GetReal"
-                        highlight.Adornee = v.Character
-                        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        highlight.Parent = v.Character
-                    end
+            local highlight =
+                character:FindFirstChild("GaneInwzaHighlight")
 
-                    -- สี Highlight
-                    highlight.FillColor = color
-                    highlight.OutlineColor = color
+            if Features.ESP.Enabled then
 
-                    highlight.FillTransparency = 0.45
-                    highlight.OutlineTransparency = 0
+                if not highlight then
 
-                    highlight.Enabled = true
+                    highlight =
+                        Instance.new("Highlight")
 
-                else
+                    highlight.Name =
+                        "GaneInwzaHighlight"
 
-                    if highlight then
-                        highlight.Enabled = false
-                    end
+                    highlight.Adornee =
+                        character
 
+                    highlight.DepthMode =
+                        Enum.HighlightDepthMode.AlwaysOnTop
+
+                    highlight.Parent =
+                        character
                 end
 
-                ----------------------------------------------------
-                -- Name ESP
-                ----------------------------------------------------
-                local vHolder = ESPHolder:FindFirstChild(v.Name)
+                -- ⭐ Highlight ใช้สีเดียวกับชื่อ
+                highlight.FillColor = color
 
-                if not vHolder then
-                    vHolder = Instance.new("Folder")
-                    vHolder.Name = v.Name
-                    vHolder.Parent = ESPHolder
+                highlight.OutlineColor = color
+
+                highlight.FillTransparency = 0.45
+
+                highlight.OutlineTransparency = 0
+
+                highlight.Enabled = true
+
+            else
+
+                if highlight then
+                    highlight.Enabled = false
                 end
+            end
 
-                local nameTag = vHolder:FindFirstChild(
-                    v.Name .. "NameTag"
+            --------------------------------------------------------
+            -- ⭐ Name ESP
+            --------------------------------------------------------
+
+            local holder =
+                ESPHolder:FindFirstChild(
+                    tostring(player.UserId)
                 )
 
-                if Features.ESP.Enabled and head then
+            if not holder then
 
-                    if not nameTag then
-                        nameTag = NameTagTemplate:Clone()
-                        nameTag.Name = v.Name .. "NameTag"
-                        nameTag.Parent = vHolder
-                    end
+                holder =
+                    Instance.new("Folder")
 
-                    nameTag.Adornee = head
+                holder.Name =
+                    tostring(player.UserId)
 
-                    nameTag.Tag.Text = v.Name
+                holder.Parent =
+                    ESPHolder
+            end
 
-                    -- สีชื่อ = สี Highlight
-                    nameTag.Tag.TextColor3 = color
+            local nameTag =
+                holder:FindFirstChild("PlayerNameTag")
 
-                    nameTag.Enabled = true
+            if Features.ESP.Enabled and head then
 
-                else
+                if not nameTag then
 
-                    if nameTag then
-                        nameTag.Enabled = false
-                    end
+                    nameTag =
+                        NameTagTemplate:Clone()
 
+                    nameTag.Name =
+                        "PlayerNameTag"
+
+                    nameTag.Parent =
+                        holder
+                end
+
+                nameTag.Adornee =
+                    head
+
+                -- ⭐ แสดงชื่อของตัวเองด้วย
+                nameTag.Tag.Text =
+                    player.Name
+
+                -- ⭐ ชื่อใช้สีเดียวกับ Highlight
+                nameTag.Tag.TextColor3 =
+                    color
+
+                nameTag.Enabled = true
+
+            else
+
+                if nameTag then
+                    nameTag.Enabled = false
                 end
             end
         end
     end
 end
 
+--------------------------------------------------------------------
+-- ⭐ ESP Update Loop
+--------------------------------------------------------------------
+
 task.spawn(function()
+
     while task.wait(0.05) do
+
         if Features.ESP.Enabled then
             updateESP()
         end
@@ -493,122 +636,207 @@ end)
 --------------------------------------------------------------------
 -- 📌 Vehicle ESP
 --------------------------------------------------------------------
+
 if game.CoreGui:FindFirstChild("VehicleESP") then
     game.CoreGui.VehicleESP:Destroy()
 end
 
-local VehicleHolder = Instance.new("Folder")
-VehicleHolder.Name = "VehicleESP"
-VehicleHolder.Parent = game.CoreGui
+local VehicleHolder =
+    Instance.new("Folder")
 
-local VehicleTagTemplate = Instance.new("BillboardGui")
-VehicleTagTemplate.Name = "VehicleTag"
-VehicleTagTemplate.Size = UDim2.new(0, 200, 0, 50)
+VehicleHolder.Name =
+    "VehicleESP"
+
+VehicleHolder.Parent =
+    game.CoreGui
+
+local VehicleTagTemplate =
+    Instance.new("BillboardGui")
+
+VehicleTagTemplate.Name =
+    "VehicleTag"
+
+VehicleTagTemplate.Size =
+    UDim2.new(0, 200, 0, 50)
+
 VehicleTagTemplate.AlwaysOnTop = true
-VehicleTagTemplate.StudsOffset = Vector3.new(0, 2, 0)
 
-local VTag = Instance.new("TextLabel")
-VTag.Name = "Tag"
+VehicleTagTemplate.StudsOffset =
+    Vector3.new(0, 2, 0)
+
+local VTag =
+    Instance.new("TextLabel")
+
+VTag.Name =
+    "Tag"
+
 VTag.BackgroundTransparency = 1
-VTag.Position = UDim2.new(0, -50, 0, 0)
-VTag.Size = UDim2.new(0, 300, 0, 20)
+
+VTag.Position =
+    UDim2.new(0, -50, 0, 0)
+
+VTag.Size =
+    UDim2.new(0, 300, 0, 20)
+
 VTag.TextSize = 15
-VTag.TextColor3 = _G.VehicleColor
-VTag.TextStrokeColor3 = Color3.new(0, 0, 0)
+
+VTag.TextColor3 =
+    _G.VehicleColor
+
+VTag.TextStrokeColor3 =
+    Color3.new(0, 0, 0)
+
 VTag.TextStrokeTransparency = 0.3
-VTag.Font = Enum.Font.SourceSansBold
-VTag.Parent = VehicleTagTemplate
+
+VTag.Font =
+    Enum.Font.SourceSansBold
+
+VTag.Parent =
+    VehicleTagTemplate
 
 local cachedSeats = {}
 
 local function trackSeat(seat)
-    if seat:IsA("VehicleSeat") and not table.find(cachedSeats, seat) then
-        table.insert(cachedSeats, seat)
+
+    if seat:IsA("VehicleSeat")
+        and not table.find(cachedSeats, seat) then
+
+        table.insert(
+            cachedSeats,
+            seat
+        )
     end
 end
 
-for _, obj in pairs(Workspace:GetDescendants()) do
+for _, obj in pairs(
+    Workspace:GetDescendants()
+) do
     trackSeat(obj)
 end
 
-Workspace.DescendantAdded:Connect(trackSeat)
+Workspace.DescendantAdded:Connect(
+    trackSeat
+)
 
-Workspace.DescendantRemoving:Connect(function(obj)
+Workspace.DescendantRemoving:Connect(
+    function(obj)
 
-    local index = table.find(cachedSeats, obj)
+        local index =
+            table.find(
+                cachedSeats,
+                obj
+            )
 
-    if index then
-        table.remove(cachedSeats, index)
+        if index then
+            table.remove(
+                cachedSeats,
+                index
+            )
+        end
 
-        local tagGui = VehicleHolder:FindFirstChild(
-            obj:GetDebugId()
-        )
+        local tagGui =
+            VehicleHolder:FindFirstChild(
+                obj:GetDebugId()
+            )
 
         if tagGui then
             tagGui:Destroy()
         end
     end
-end)
+)
 
 local function updateVehicleESP()
 
     if not Features.VehicleESP.Enabled then
 
-        for _, child in pairs(VehicleHolder:GetChildren()) do
-            child.Enabled = false
+        for _, child in pairs(
+            VehicleHolder:GetChildren()
+        ) do
+
+            if child:IsA("BillboardGui") then
+                child.Enabled = false
+            end
         end
 
         return
     end
 
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild(
-        "HumanoidRootPart"
-    )
+    local myChar =
+        LocalPlayer.Character
+
+    local myRoot =
+        myChar
+        and myChar:FindFirstChild(
+            "HumanoidRootPart"
+        )
 
     for i = #cachedSeats, 1, -1 do
 
-        local seat = cachedSeats[i]
+        local seat =
+            cachedSeats[i]
 
-        if not seat or not seat.Parent then
+        if not seat
+            or not seat.Parent then
 
-            table.remove(cachedSeats, i)
+            table.remove(
+                cachedSeats,
+                i
+            )
 
         else
 
-            local vehicleModel = seat.Parent
+            local vehicleModel =
+                seat.Parent
 
-            if not Players:GetPlayerFromCharacter(vehicleModel) then
+            if not Players:GetPlayerFromCharacter(
+                vehicleModel
+            ) then
 
-                local debugId = seat:GetDebugId()
+                local debugId =
+                    seat:GetDebugId()
 
-                local tagGui = VehicleHolder:FindFirstChild(
-                    debugId
-                )
+                local tagGui =
+                    VehicleHolder:FindFirstChild(
+                        debugId
+                    )
 
                 if not tagGui then
 
-                    tagGui = VehicleTagTemplate:Clone()
-                    tagGui.Name = debugId
-                    tagGui.Adornee = seat
-                    tagGui.Parent = VehicleHolder
+                    tagGui =
+                        VehicleTagTemplate:Clone()
 
+                    tagGui.Name =
+                        debugId
+
+                    tagGui.Adornee =
+                        seat
+
+                    tagGui.Parent =
+                        VehicleHolder
                 end
 
                 local distanceStr = ""
 
                 if myRoot then
 
-                    local dist = math.floor(
-                        (myRoot.Position - seat.Position).Magnitude
-                    )
+                    local dist =
+                        math.floor(
+                            (
+                                myRoot.Position
+                                - seat.Position
+                            ).Magnitude
+                        )
 
-                    distanceStr = " [" .. tostring(dist) .. "m]"
-
+                    distanceStr =
+                        " [" ..
+                        tostring(dist) ..
+                        "m]"
                 end
 
                 tagGui.Tag.Text =
-                    "🚗 " .. vehicleModel.Name .. distanceStr
+                    "🚗 "
+                    .. vehicleModel.Name
+                    .. distanceStr
 
                 tagGui.Enabled = true
             end
@@ -623,39 +851,51 @@ task.spawn(function()
         if Features.VehicleESP.Enabled then
             updateVehicleESP()
         end
-
     end
-
 end)
 
 --------------------------------------------------------------------
 -- 📌 Fullbright
 --------------------------------------------------------------------
+
 local function setBright()
 
     Lighting.Brightness = 2
+
     Lighting.ClockTime = 14
+
     Lighting.FogEnd = 100000
+
     Lighting.GlobalShadows = false
 
     Lighting.OutdoorAmbient =
-        Color3.fromRGB(255, 255, 255)
+        Color3.fromRGB(
+            255,
+            255,
+            255
+        )
 
     Lighting.Ambient =
-        Color3.fromRGB(255, 255, 255)
+        Color3.fromRGB(
+            255,
+            255,
+            255
+        )
 end
 
-RunService.RenderStepped:Connect(function()
+RunService.RenderStepped:Connect(
+    function()
 
-    if Features.Fullbright.Enabled then
-        setBright()
+        if Features.Fullbright.Enabled then
+            setBright()
+        end
     end
-
-end)
+)
 
 --------------------------------------------------------------------
 -- 📌 Aimlock
 --------------------------------------------------------------------
+
 local currentTarget = nil
 
 local function getClosestTarget()
@@ -665,12 +905,15 @@ local function getClosestTarget()
     local shortestDistance =
         Settings.FOVRadius
 
-    local screenCenter = Vector2.new(
-        Camera.ViewportSize.X / 2,
-        Camera.ViewportSize.Y / 2
-    )
+    local screenCenter =
+        Vector2.new(
+            Camera.ViewportSize.X / 2,
+            Camera.ViewportSize.Y / 2
+        )
 
-    for _, player in pairs(Players:GetPlayers()) do
+    for _, player in pairs(
+        Players:GetPlayers()
+    ) do
 
         if player ~= LocalPlayer
             and player.Character then
@@ -696,21 +939,25 @@ local function getClosestTarget()
 
                 if onScreen then
 
-                    local target2D = Vector2.new(
-                        screenPos.X,
-                        screenPos.Y
-                    )
+                    local target2D =
+                        Vector2.new(
+                            screenPos.X,
+                            screenPos.Y
+                        )
 
                     local dist =
-                        (target2D - screenCenter).Magnitude
+                        (
+                            target2D
+                            - screenCenter
+                        ).Magnitude
 
                     if dist < shortestDistance then
 
-                        shortestDistance = dist
+                        shortestDistance =
+                            dist
 
                         closestCharacter =
                             player.Character
-
                     end
                 end
             end
@@ -720,90 +967,102 @@ local function getClosestTarget()
     return closestCharacter
 end
 
-RunService.RenderStepped:Connect(function()
+RunService.RenderStepped:Connect(
+    function()
 
-    if Features.TargetLock.Enabled then
+        if Features.TargetLock.Enabled then
 
-        currentTarget = getClosestTarget()
+            currentTarget =
+                getClosestTarget()
 
-        if currentTarget then
+            if currentTarget then
 
-            local part =
-                currentTarget:FindFirstChild(
-                    Settings.TargetPart
-                )
-
-            if part then
-
-                Camera.CFrame =
-                    CFrame.new(
-                        Camera.CFrame.Position,
-                        part.Position
+                local part =
+                    currentTarget:FindFirstChild(
+                        Settings.TargetPart
                     )
 
+                if part then
+
+                    Camera.CFrame =
+                        CFrame.new(
+                            Camera.CFrame.Position,
+                            part.Position
+                        )
+                end
             end
         end
     end
-
-end)
+)
 
 --------------------------------------------------------------------
 -- 📌 High Jump
 --------------------------------------------------------------------
-RunService.Stepped:Connect(function()
 
-    local char = LocalPlayer.Character
+RunService.Stepped:Connect(
+    function()
 
-    if char then
+        local char =
+            LocalPlayer.Character
 
-        local humanoid =
-            char:FindFirstChildOfClass("Humanoid")
+        if char then
 
-        if humanoid then
+            local humanoid =
+                char:FindFirstChildOfClass(
+                    "Humanoid"
+                )
 
-            saveOriginalValues(humanoid)
+            if humanoid then
 
-            if Features.HighJump.Enabled then
+                saveOriginalValues(
+                    humanoid
+                )
 
-                humanoid.UseJumpPower = true
+                if Features.HighJump.Enabled then
 
-                if humanoid.JumpPower
-                    ~= Settings.JumpPowerVal then
+                    humanoid.UseJumpPower = true
 
-                    humanoid.JumpPower =
-                        Settings.JumpPowerVal
+                    if humanoid.JumpPower
+                        ~= Settings.JumpPowerVal then
 
-                end
+                        humanoid.JumpPower =
+                            Settings.JumpPowerVal
+                    end
 
-            else
+                else
 
-                if humanoid.JumpPower
-                    == Settings.JumpPowerVal then
+                    if humanoid.JumpPower
+                        == Settings.JumpPowerVal then
 
-                    humanoid.UseJumpPower =
-                        originalUseJumpPower
+                        humanoid.UseJumpPower =
+                            originalUseJumpPower
 
-                    humanoid.JumpPower =
-                        originalJumpPower
-
+                        humanoid.JumpPower =
+                            originalJumpPower
+                    end
                 end
             end
         end
     end
-end)
+)
 
-LocalPlayer.CharacterAdded:Connect(function(char)
+LocalPlayer.CharacterAdded:Connect(
+    function(char)
 
-    hasSavedOriginalJump = false
+        hasSavedOriginalJump = false
 
-    local humanoid =
-        char:WaitForChild("Humanoid")
+        local humanoid =
+            char:WaitForChild(
+                "Humanoid"
+            )
 
-    task.wait(0.5)
+        task.wait(0.5)
 
-    saveOriginalValues(humanoid)
-
-end)
+        saveOriginalValues(
+            humanoid
+        )
+    end
+)
 
 if LocalPlayer.Character then
 
@@ -818,200 +1077,352 @@ if LocalPlayer.Character then
 end
 
 --------------------------------------------------------------------
--- 📌 4. สร้างหน้าต่าง GUI Hub หลัก
+-- 📌 GUI
 --------------------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GaneInwzaHub"
+
+local ScreenGui =
+    Instance.new("ScreenGui")
+
+ScreenGui.Name =
+    "GaneInwzaHub"
+
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = PlayerGui
+
+ScreenGui.Parent =
+    PlayerGui
 
 --------------------------------------------------------------------
 -- Chat Head
 --------------------------------------------------------------------
-local ChatHead = Instance.new("TextButton")
 
-ChatHead.Name = "ChatHead"
+local ChatHead =
+    Instance.new("TextButton")
+
+ChatHead.Name =
+    "ChatHead"
 
 ChatHead.Size =
-    UDim2.new(0, 48, 0, 48)
+    UDim2.new(
+        0,
+        48,
+        0,
+        48
+    )
 
 ChatHead.Position =
-    UDim2.new(0, 30, 0.5, -24)
+    UDim2.new(
+        0,
+        30,
+        0.5,
+        -24
+    )
 
 ChatHead.BackgroundColor3 =
-    Color3.fromRGB(20, 20, 28)
+    Color3.fromRGB(
+        20,
+        20,
+        28
+    )
 
-ChatHead.Text = "G"
+ChatHead.Text =
+    "G"
 
 ChatHead.TextColor3 =
-    Color3.fromRGB(255, 45, 85)
+    Color3.fromRGB(
+        255,
+        45,
+        85
+    )
 
 ChatHead.TextSize = 24
-ChatHead.Font = Enum.Font.GothamBold
+
+ChatHead.Font =
+    Enum.Font.GothamBold
 
 ChatHead.Active = true
-ChatHead.Draggable = true
-ChatHead.Parent = ScreenGui
 
-Instance.new("UICorner", ChatHead).CornerRadius =
+ChatHead.Draggable = true
+
+ChatHead.Parent =
+    ScreenGui
+
+Instance.new(
+    "UICorner",
+    ChatHead
+).CornerRadius =
     UDim.new(1, 0)
 
-local ChatHeadStroke = Instance.new("UIStroke")
+local ChatHeadStroke =
+    Instance.new("UIStroke")
 
 ChatHeadStroke.Color =
-    Color3.fromRGB(255, 45, 85)
+    Color3.fromRGB(
+        255,
+        45,
+        85
+    )
 
 ChatHeadStroke.Thickness = 2.5
 
-ChatHeadStroke.Parent = ChatHead
+ChatHeadStroke.Parent =
+    ChatHead
 
 --------------------------------------------------------------------
--- MainFrame
+-- Main Frame
 --------------------------------------------------------------------
-local MainFrame = Instance.new("Frame")
 
-MainFrame.Name = "MainFrame"
+local MainFrame =
+    Instance.new("Frame")
+
+MainFrame.Name =
+    "MainFrame"
 
 MainFrame.Size =
-    UDim2.new(0, 560, 0, 400)
+    UDim2.new(
+        0,
+        560,
+        0,
+        400
+    )
 
 MainFrame.Position =
-    UDim2.new(0.5, -280, 0.5, -200)
+    UDim2.new(
+        0.5,
+        -280,
+        0.5,
+        -200
+    )
 
 MainFrame.BackgroundColor3 =
-    Color3.fromRGB(18, 18, 24)
+    Color3.fromRGB(
+        18,
+        18,
+        24
+    )
 
 MainFrame.BorderSizePixel = 0
+
 MainFrame.ClipsDescendants = true
 
 MainFrame.Active = true
+
 MainFrame.Draggable = true
 
-MainFrame.Parent = ScreenGui
+MainFrame.Parent =
+    ScreenGui
 
-Instance.new("UICorner", MainFrame).CornerRadius =
+Instance.new(
+    "UICorner",
+    MainFrame
+).CornerRadius =
     UDim.new(0, 10)
 
-ChatHead.MouseButton1Click:Connect(function()
+ChatHead.MouseButton1Click:Connect(
+    function()
 
-    MainFrame.Visible =
-        not MainFrame.Visible
-
-end)
+        MainFrame.Visible =
+            not MainFrame.Visible
+    end
+)
 
 --------------------------------------------------------------------
 -- Minimize
 --------------------------------------------------------------------
-local MinimizeBtn = Instance.new("TextButton")
+
+local MinimizeBtn =
+    Instance.new("TextButton")
 
 MinimizeBtn.Size =
-    UDim2.new(0, 26, 0, 26)
+    UDim2.new(
+        0,
+        26,
+        0,
+        26
+    )
 
 MinimizeBtn.Position =
-    UDim2.new(1, -62, 0, 10)
+    UDim2.new(
+        1,
+        -62,
+        0,
+        10
+    )
 
 MinimizeBtn.BackgroundColor3 =
-    Color3.fromRGB(45, 45, 60)
+    Color3.fromRGB(
+        45,
+        45,
+        60
+    )
 
-MinimizeBtn.Text = "-"
+MinimizeBtn.Text =
+    "-"
+
 MinimizeBtn.TextColor3 =
-    Color3.fromRGB(255, 255, 255)
+    Color3.fromRGB(
+        255,
+        255,
+        255
+    )
 
 MinimizeBtn.TextSize = 14
-MinimizeBtn.Font = Enum.Font.GothamBold
 
-MinimizeBtn.Parent = MainFrame
+MinimizeBtn.Font =
+    Enum.Font.GothamBold
 
-Instance.new("UICorner", MinimizeBtn).CornerRadius =
+MinimizeBtn.Parent =
+    MainFrame
+
+Instance.new(
+    "UICorner",
+    MinimizeBtn
+).CornerRadius =
     UDim.new(0, 4)
 
-MinimizeBtn.MouseButton1Click:Connect(function()
+MinimizeBtn.MouseButton1Click:Connect(
+    function()
 
-    MainFrame.Visible = false
-    ChatHead.Visible = true
+        MainFrame.Visible = false
 
-end)
+        ChatHead.Visible = true
+    end
+)
 
 --------------------------------------------------------------------
 -- Close
 --------------------------------------------------------------------
-local CloseBtn = Instance.new("TextButton")
+
+local CloseBtn =
+    Instance.new("TextButton")
 
 CloseBtn.Size =
-    UDim2.new(0, 26, 0, 26)
+    UDim2.new(
+        0,
+        26,
+        0,
+        26
+    )
 
 CloseBtn.Position =
-    UDim2.new(1, -30, 0, 10)
+    UDim2.new(
+        1,
+        -30,
+        0,
+        10
+    )
 
 CloseBtn.BackgroundColor3 =
-    Color3.fromRGB(200, 40, 40)
+    Color3.fromRGB(
+        200,
+        40,
+        40
+    )
 
-CloseBtn.Text = "X"
+CloseBtn.Text =
+    "X"
 
 CloseBtn.TextColor3 =
-    Color3.fromRGB(255, 255, 255)
+    Color3.fromRGB(
+        255,
+        255,
+        255
+    )
 
 CloseBtn.TextSize = 12
-CloseBtn.Font = Enum.Font.GothamBold
 
-CloseBtn.Parent = MainFrame
+CloseBtn.Font =
+    Enum.Font.GothamBold
 
-Instance.new("UICorner", CloseBtn).CornerRadius =
+CloseBtn.Parent =
+    MainFrame
+
+Instance.new(
+    "UICorner",
+    CloseBtn
+).CornerRadius =
     UDim.new(0, 4)
 
-CloseBtn.MouseButton1Click:Connect(function()
+CloseBtn.MouseButton1Click:Connect(
+    function()
 
-    Features.ESP.Enabled = false
-    Features.VehicleESP.Enabled = false
-    Features.Fullbright.Enabled = false
-    Features.TargetLock.Enabled = false
-    Features.HighJump.Enabled = false
+        Features.ESP.Enabled = false
 
-    updateESP()
-    updateVehicleESP()
+        Features.VehicleESP.Enabled = false
 
-    if game.CoreGui:FindFirstChild("ESP") then
-        game.CoreGui.ESP:Destroy()
+        Features.Fullbright.Enabled = false
+
+        Features.TargetLock.Enabled = false
+
+        Features.HighJump.Enabled = false
+
+        if game.CoreGui:FindFirstChild("ESP") then
+            game.CoreGui.ESP:Destroy()
+        end
+
+        if game.CoreGui:FindFirstChild("VehicleESP") then
+            game.CoreGui.VehicleESP:Destroy()
+        end
+
+        if PlayerGui:FindFirstChild("FOVCircleGui") then
+            PlayerGui.FOVCircleGui:Destroy()
+        end
+
+        ScreenGui:Destroy()
     end
-
-    if game.CoreGui:FindFirstChild("VehicleESP") then
-        game.CoreGui.VehicleESP:Destroy()
-    end
-
-    ScreenGui:Destroy()
-
-    if PlayerGui:FindFirstChild("FOVCircleGui") then
-        PlayerGui.FOVCircleGui:Destroy()
-    end
-
-end)
+)
 
 --------------------------------------------------------------------
 -- Sidebar
 --------------------------------------------------------------------
-local Sidebar = Instance.new("Frame")
+
+local Sidebar =
+    Instance.new("Frame")
 
 Sidebar.Size =
-    UDim2.new(0, 150, 1, 0)
+    UDim2.new(
+        0,
+        150,
+        1,
+        0
+    )
 
 Sidebar.BackgroundColor3 =
-    Color3.fromRGB(14, 14, 18)
+    Color3.fromRGB(
+        14,
+        14,
+        18
+    )
 
 Sidebar.BorderSizePixel = 0
-Sidebar.Parent = MainFrame
+
+Sidebar.Parent =
+    MainFrame
 
 --------------------------------------------------------------------
 -- Title
 --------------------------------------------------------------------
-local TitleLabel = Instance.new("TextLabel")
 
-TitleLabel.Name = "TitleLabel"
+local TitleLabel =
+    Instance.new("TextLabel")
+
+TitleLabel.Name =
+    "TitleLabel"
 
 TitleLabel.Size =
-    UDim2.new(1, -20, 0, 40)
+    UDim2.new(
+        1,
+        -20,
+        0,
+        40
+    )
 
 TitleLabel.Position =
-    UDim2.new(0, 15, 0, 10)
+    UDim2.new(
+        0,
+        15,
+        0,
+        10
+    )
 
 TitleLabel.BackgroundTransparency = 1
 
@@ -1019,38 +1430,62 @@ TitleLabel.Text =
     LangText[CurrentLanguage].HubTitle
 
 TitleLabel.TextColor3 =
-    Color3.fromRGB(255, 255, 255)
+    Color3.fromRGB(
+        255,
+        255,
+        255
+    )
 
 TitleLabel.TextSize = 18
-TitleLabel.Font = Enum.Font.GothamBold
+
+TitleLabel.Font =
+    Enum.Font.GothamBold
 
 TitleLabel.TextXAlignment =
     Enum.TextXAlignment.Left
 
-TitleLabel.Parent = Sidebar
+TitleLabel.Parent =
+    Sidebar
 
 --------------------------------------------------------------------
--- Main Container
+-- Containers
 --------------------------------------------------------------------
-local MainContainer = Instance.new("ScrollingFrame")
 
-MainContainer.Name = "MainContainer"
+local MainContainer =
+    Instance.new("ScrollingFrame")
+
+MainContainer.Name =
+    "MainContainer"
 
 MainContainer.Size =
-    UDim2.new(1, -165, 1, -50)
+    UDim2.new(
+        1,
+        -165,
+        1,
+        -50
+    )
 
 MainContainer.Position =
-    UDim2.new(0, 155, 0, 45)
+    UDim2.new(
+        0,
+        155,
+        0,
+        45
+    )
 
 MainContainer.BackgroundTransparency = 1
+
 MainContainer.BorderSizePixel = 0
 
 MainContainer.ScrollBarThickness = 4
+
 MainContainer.Visible = true
 
-MainContainer.Parent = MainFrame
+MainContainer.Parent =
+    MainFrame
 
-local MainUIList = Instance.new("UIListLayout")
+local MainUIList =
+    Instance.new("UIListLayout")
 
 MainUIList.SortOrder =
     Enum.SortOrder.LayoutOrder
@@ -1058,30 +1493,44 @@ MainUIList.SortOrder =
 MainUIList.Padding =
     UDim.new(0, 8)
 
-MainUIList.Parent = MainContainer
+MainUIList.Parent =
+    MainContainer
 
---------------------------------------------------------------------
--- Other Container
---------------------------------------------------------------------
-local OtherContainer = Instance.new("ScrollingFrame")
+local OtherContainer =
+    Instance.new("ScrollingFrame")
 
-OtherContainer.Name = "OtherContainer"
+OtherContainer.Name =
+    "OtherContainer"
 
 OtherContainer.Size =
-    UDim2.new(1, -165, 1, -50)
+    UDim2.new(
+        1,
+        -165,
+        1,
+        -50
+    )
 
 OtherContainer.Position =
-    UDim2.new(0, 155, 0, 45)
+    UDim2.new(
+        0,
+        155,
+        0,
+        45
+    )
 
 OtherContainer.BackgroundTransparency = 1
+
 OtherContainer.BorderSizePixel = 0
 
 OtherContainer.ScrollBarThickness = 4
+
 OtherContainer.Visible = false
 
-OtherContainer.Parent = MainFrame
+OtherContainer.Parent =
+    MainFrame
 
-local OtherUIList = Instance.new("UIListLayout")
+local OtherUIList =
+    Instance.new("UIListLayout")
 
 OtherUIList.SortOrder =
     Enum.SortOrder.LayoutOrder
@@ -1089,31 +1538,44 @@ OtherUIList.SortOrder =
 OtherUIList.Padding =
     UDim.new(0, 8)
 
-OtherUIList.Parent = OtherContainer
+OtherUIList.Parent =
+    OtherContainer
 
---------------------------------------------------------------------
--- Teleport Container
---------------------------------------------------------------------
-local TeleportContainer = Instance.new("ScrollingFrame")
+local TeleportContainer =
+    Instance.new("ScrollingFrame")
 
 TeleportContainer.Name =
     "TeleportContainer"
 
 TeleportContainer.Size =
-    UDim2.new(1, -165, 1, -50)
+    UDim2.new(
+        1,
+        -165,
+        1,
+        -50
+    )
 
 TeleportContainer.Position =
-    UDim2.new(0, 155, 0, 45)
+    UDim2.new(
+        0,
+        155,
+        0,
+        45
+    )
 
 TeleportContainer.BackgroundTransparency = 1
+
 TeleportContainer.BorderSizePixel = 0
 
 TeleportContainer.ScrollBarThickness = 4
+
 TeleportContainer.Visible = false
 
-TeleportContainer.Parent = MainFrame
+TeleportContainer.Parent =
+    MainFrame
 
-local TeleportUIList = Instance.new("UIListLayout")
+local TeleportUIList =
+    Instance.new("UIListLayout")
 
 TeleportUIList.SortOrder =
     Enum.SortOrder.LayoutOrder
@@ -1121,11 +1583,13 @@ TeleportUIList.SortOrder =
 TeleportUIList.Padding =
     UDim.new(0, 8)
 
-TeleportUIList.Parent = TeleportContainer
+TeleportUIList.Parent =
+    TeleportContainer
 
 --------------------------------------------------------------------
 -- Tabs
 --------------------------------------------------------------------
+
 local tabButtonReferences = {}
 
 local function createTabButton(
@@ -1141,7 +1605,12 @@ local function createTabButton(
         "TabBtn_" .. nameKey
 
     TabBtn.Size =
-        UDim2.new(1, -20, 0, 36)
+        UDim2.new(
+            1,
+            -20,
+            0,
+            36
+        )
 
     TabBtn.Position =
         UDim2.new(
@@ -1153,21 +1622,40 @@ local function createTabButton(
 
     TabBtn.BackgroundColor3 =
         targetContainer.Visible
-        and Color3.fromRGB(38, 38, 50)
-        or Color3.fromRGB(20, 20, 26)
+        and Color3.fromRGB(
+            38,
+            38,
+            50
+        )
+        or Color3.fromRGB(
+            20,
+            20,
+            26
+        )
 
     TabBtn.Text =
-        LangText[CurrentLanguage]["Tab" .. nameKey]
+        LangText[CurrentLanguage]
+        ["Tab" .. nameKey]
 
     TabBtn.TextColor3 =
-        Color3.fromRGB(255, 255, 255)
+        Color3.fromRGB(
+            255,
+            255,
+            255
+        )
 
     TabBtn.TextSize = 13
-    TabBtn.Font = Enum.Font.GothamBold
 
-    TabBtn.Parent = Sidebar
+    TabBtn.Font =
+        Enum.Font.GothamBold
 
-    Instance.new("UICorner", TabBtn).CornerRadius =
+    TabBtn.Parent =
+        Sidebar
+
+    Instance.new(
+        "UICorner",
+        TabBtn
+    ).CornerRadius =
         UDim.new(0, 6)
 
     table.insert(
@@ -1178,35 +1666,43 @@ local function createTabButton(
         }
     )
 
-    TabBtn.MouseButton1Click:Connect(function()
+    TabBtn.MouseButton1Click:Connect(
+        function()
 
-        MainContainer.Visible =
-            targetContainer == MainContainer
+            MainContainer.Visible =
+                targetContainer == MainContainer
 
-        OtherContainer.Visible =
-            targetContainer == OtherContainer
+            OtherContainer.Visible =
+                targetContainer == OtherContainer
 
-        TeleportContainer.Visible =
-            targetContainer == TeleportContainer
+            TeleportContainer.Visible =
+                targetContainer == TeleportContainer
 
-        for _, child in pairs(
-            Sidebar:GetChildren()
-        ) do
+            for _, child in pairs(
+                Sidebar:GetChildren()
+            ) do
 
-            if child:IsA("TextButton")
-                and child ~= TitleLabel
-                and child.Name ~= "LangBtn" then
+                if child:IsA("TextButton")
+                    and child ~= TitleLabel
+                    and child.Name ~= "LangBtn" then
 
-                child.BackgroundColor3 =
-                    Color3.fromRGB(20, 20, 26)
-
+                    child.BackgroundColor3 =
+                        Color3.fromRGB(
+                            20,
+                            20,
+                            26
+                        )
+                end
             end
+
+            TabBtn.BackgroundColor3 =
+                Color3.fromRGB(
+                    38,
+                    38,
+                    50
+                )
         end
-
-        TabBtn.BackgroundColor3 =
-            Color3.fromRGB(38, 38, 50)
-
-    end)
+    )
 end
 
 createTabButton(
@@ -1228,43 +1724,67 @@ createTabButton(
 )
 
 --------------------------------------------------------------------
--- Feature Variables
+-- Feature Rows
 --------------------------------------------------------------------
+
 local listeningFeature = nil
 local listeningMenuKey = false
 local localizedLabels = {}
 
---------------------------------------------------------------------
--- Feature Row
---------------------------------------------------------------------
 local function createFeatureRow(
     featureKey,
     textKey,
     parentContainer
 )
 
-    local data = Features[featureKey]
+    local data =
+        Features[featureKey]
 
-    local Row = Instance.new("Frame")
+    local Row =
+        Instance.new("Frame")
 
     Row.Size =
-        UDim2.new(1, -10, 0, 45)
+        UDim2.new(
+            1,
+            -10,
+            0,
+            45
+        )
 
     Row.BackgroundColor3 =
-        Color3.fromRGB(26, 26, 34)
+        Color3.fromRGB(
+            26,
+            26,
+            34
+        )
 
-    Row.Parent = parentContainer
+    Row.Parent =
+        parentContainer
 
-    Instance.new("UICorner", Row).CornerRadius =
+    Instance.new(
+        "UICorner",
+        Row
+    ).CornerRadius =
         UDim.new(0, 6)
 
-    local Label = Instance.new("TextLabel")
+    local Label =
+        Instance.new("TextLabel")
 
     Label.Size =
-        UDim2.new(1, -150, 1, 0)
+        UDim2.new(
+            1,
+            -150,
+            1,
+            0
+        )
 
     Label.Position =
-        UDim2.new(0, 12, 0, 0)
+        UDim2.new(
+            0,
+            12,
+            0,
+            0
+        )
 
     Label.BackgroundTransparency = 1
 
@@ -1272,15 +1792,22 @@ local function createFeatureRow(
         LangText[CurrentLanguage][textKey]
 
     Label.TextColor3 =
-        Color3.fromRGB(220, 220, 230)
+        Color3.fromRGB(
+            220,
+            220,
+            230
+        )
 
     Label.TextSize = 13
-    Label.Font = Enum.Font.GothamSemibold
+
+    Label.Font =
+        Enum.Font.GothamSemibold
 
     Label.TextXAlignment =
         Enum.TextXAlignment.Left
 
-    Label.Parent = Row
+    Label.Parent =
+        Row
 
     table.insert(
         localizedLabels,
@@ -1294,13 +1821,27 @@ local function createFeatureRow(
         Instance.new("TextButton")
 
     KeyBtn.Size =
-        UDim2.new(0, 65, 0, 26)
+        UDim2.new(
+            0,
+            65,
+            0,
+            26
+        )
 
     KeyBtn.Position =
-        UDim2.new(1, -125, 0.5, -13)
+        UDim2.new(
+            1,
+            -125,
+            0.5,
+            -13
+        )
 
     KeyBtn.BackgroundColor3 =
-        Color3.fromRGB(38, 38, 50)
+        Color3.fromRGB(
+            38,
+            38,
+            50
+        )
 
     KeyBtn.Text =
         data.Key
@@ -1308,54 +1849,111 @@ local function createFeatureRow(
         or "[None]"
 
     KeyBtn.TextColor3 =
-        Color3.fromRGB(180, 180, 200)
+        Color3.fromRGB(
+            180,
+            180,
+            200
+        )
 
     KeyBtn.TextSize = 11
-    KeyBtn.Font = Enum.Font.GothamBold
 
-    KeyBtn.Parent = Row
+    KeyBtn.Font =
+        Enum.Font.GothamBold
 
-    Instance.new("UICorner", KeyBtn).CornerRadius =
+    KeyBtn.Parent =
+        Row
+
+    Instance.new(
+        "UICorner",
+        KeyBtn
+    ).CornerRadius =
         UDim.new(0, 4)
 
     local SwitchBG =
         Instance.new("TextButton")
 
     SwitchBG.Size =
-        UDim2.new(0, 44, 0, 22)
+        UDim2.new(
+            0,
+            44,
+            0,
+            22
+        )
 
     SwitchBG.Position =
-        UDim2.new(1, -54, 0.5, -11)
+        UDim2.new(
+            1,
+            -54,
+            0.5,
+            -11
+        )
 
     SwitchBG.BackgroundColor3 =
         data.Enabled
-        and Color3.fromRGB(255, 45, 85)
-        or Color3.fromRGB(50, 50, 60)
+        and Color3.fromRGB(
+            255,
+            45,
+            85
+        )
+        or Color3.fromRGB(
+            50,
+            50,
+            60
+        )
 
     SwitchBG.Text = ""
+
     SwitchBG.AutoButtonColor = false
 
-    SwitchBG.Parent = Row
+    SwitchBG.Parent =
+        Row
 
-    Instance.new("UICorner", SwitchBG).CornerRadius =
+    Instance.new(
+        "UICorner",
+        SwitchBG
+    ).CornerRadius =
         UDim.new(1, 0)
 
-    local Dot = Instance.new("Frame")
+    local Dot =
+        Instance.new("Frame")
 
     Dot.Size =
-        UDim2.new(0, 16, 0, 16)
+        UDim2.new(
+            0,
+            16,
+            0,
+            16
+        )
 
     Dot.Position =
         data.Enabled
-        and UDim2.new(1, -19, 0.5, -8)
-        or UDim2.new(0, 3, 0.5, -8)
+        and UDim2.new(
+            1,
+            -19,
+            0.5,
+            -8
+        )
+        or UDim2.new(
+            0,
+            3,
+            0.5,
+            -8
+        )
 
     Dot.BackgroundColor3 =
-        Color3.fromRGB(255, 255, 255)
+        Color3.fromRGB(
+            255,
+            255,
+            255
+        )
 
-    Dot.Parent = SwitchBG
+    Dot.Parent =
+        SwitchBG
 
-    Instance.new("UICorner", Dot).CornerRadius =
+    Instance.new(
+        "UICorner",
+        Dot
+    ).CornerRadius =
         UDim.new(1, 0)
 
     local function updateSwitchVisual(state)
@@ -1365,84 +1963,99 @@ local function createFeatureRow(
         if state then
 
             SwitchBG.BackgroundColor3 =
-                Color3.fromRGB(255, 45, 85)
+                Color3.fromRGB(
+                    255,
+                    45,
+                    85
+                )
 
             Dot:TweenPosition(
-                UDim2.new(1, -19, 0.5, -8),
+                UDim2.new(
+                    1,
+                    -19,
+                    0.5,
+                    -8
+                ),
                 "Out",
                 "Quad",
                 0.15,
                 true
             )
-
-            if featureKey == "ESP" then
-                updateESP()
-            end
-
-            if featureKey == "VehicleESP" then
-                updateVehicleESP()
-            end
 
         else
 
             SwitchBG.BackgroundColor3 =
-                Color3.fromRGB(50, 50, 60)
+                Color3.fromRGB(
+                    50,
+                    50,
+                    60
+                )
 
             Dot:TweenPosition(
-                UDim2.new(0, 3, 0.5, -8),
+                UDim2.new(
+                    0,
+                    3,
+                    0.5,
+                    -8
+                ),
                 "Out",
                 "Quad",
                 0.15,
                 true
             )
+        end
 
-            if featureKey == "ESP" then
-                updateESP()
-            end
+        if featureKey == "ESP" then
+            updateESP()
+        end
 
-            if featureKey == "VehicleESP" then
-                updateVehicleESP()
-            end
-
+        if featureKey == "VehicleESP" then
+            updateVehicleESP()
         end
 
         updateFOVCircle()
-
     end
 
-    SwitchBG.MouseButton1Click:Connect(function()
+    SwitchBG.MouseButton1Click:Connect(
+        function()
 
-        updateSwitchVisual(
-            not data.Enabled
-        )
-
-    end)
-
-    KeyBtn.MouseButton1Click:Connect(function()
-
-        if listeningFeature == nil
-            and not listeningMenuKey then
-
-            listeningFeature = {
-                KeyBtn = KeyBtn,
-                FeatureKey = featureKey
-            }
-
-            KeyBtn.Text = "..."
-            KeyBtn.TextColor3 =
-                Color3.fromRGB(255, 200, 0)
-
+            updateSwitchVisual(
+                not data.Enabled
+            )
         end
+    )
 
-    end)
+    KeyBtn.MouseButton1Click:Connect(
+        function()
+
+            if listeningFeature == nil
+                and not listeningMenuKey then
+
+                listeningFeature = {
+                    KeyBtn = KeyBtn,
+                    FeatureKey = featureKey
+                }
+
+                KeyBtn.Text = "..."
+
+                KeyBtn.TextColor3 =
+                    Color3.fromRGB(
+                        255,
+                        200,
+                        0
+                    )
+            end
+        end
+    )
 
     data.ToggleVisual =
         updateSwitchVisual
 end
 
 --------------------------------------------------------------------
--- Slider
+-- Sliders
 --------------------------------------------------------------------
+
 local sliderReferences = {}
 
 local function createSlider(
@@ -1458,25 +2071,47 @@ local function createSlider(
         Instance.new("Frame")
 
     SliderRow.Size =
-        UDim2.new(1, -10, 0, 50)
+        UDim2.new(
+            1,
+            -10,
+            0,
+            50
+        )
 
     SliderRow.BackgroundColor3 =
-        Color3.fromRGB(26, 26, 34)
+        Color3.fromRGB(
+            26,
+            26,
+            34
+        )
 
     SliderRow.Parent =
         parentContainer
 
-    Instance.new("UICorner", SliderRow).CornerRadius =
+    Instance.new(
+        "UICorner",
+        SliderRow
+    ).CornerRadius =
         UDim.new(0, 6)
 
     local SLabel =
         Instance.new("TextLabel")
 
     SLabel.Size =
-        UDim2.new(1, -24, 0, 20)
+        UDim2.new(
+            1,
+            -24,
+            0,
+            20
+        )
 
     SLabel.Position =
-        UDim2.new(0, 12, 0, 4)
+        UDim2.new(
+            0,
+            12,
+            0,
+            4
+        )
 
     SLabel.BackgroundTransparency = 1
 
@@ -1486,10 +2121,16 @@ local function createSlider(
         .. tostring(defaultVal)
 
     SLabel.TextColor3 =
-        Color3.fromRGB(200, 200, 210)
+        Color3.fromRGB(
+            200,
+            200,
+            210
+        )
 
     SLabel.TextSize = 12
-    SLabel.Font = Enum.Font.GothamSemibold
+
+    SLabel.Font =
+        Enum.Font.GothamSemibold
 
     SLabel.TextXAlignment =
         Enum.TextXAlignment.Left
@@ -1510,18 +2151,35 @@ local function createSlider(
         Instance.new("Frame")
 
     SliderBar.Size =
-        UDim2.new(1, -24, 0, 6)
+        UDim2.new(
+            1,
+            -24,
+            0,
+            6
+        )
 
     SliderBar.Position =
-        UDim2.new(0, 12, 0, 32)
+        UDim2.new(
+            0,
+            12,
+            0,
+            32
+        )
 
     SliderBar.BackgroundColor3 =
-        Color3.fromRGB(45, 45, 60)
+        Color3.fromRGB(
+            45,
+            45,
+            60
+        )
 
     SliderBar.Parent =
         SliderRow
 
-    Instance.new("UICorner", SliderBar).CornerRadius =
+    Instance.new(
+        "UICorner",
+        SliderBar
+    ).CornerRadius =
         UDim.new(1, 0)
 
     local SliderFill =
@@ -1532,15 +2190,27 @@ local function createSlider(
         / (maxVal - minVal)
 
     SliderFill.Size =
-        UDim2.new(startPct, 0, 1, 0)
+        UDim2.new(
+            startPct,
+            0,
+            1,
+            0
+        )
 
     SliderFill.BackgroundColor3 =
-        Color3.fromRGB(255, 45, 85)
+        Color3.fromRGB(
+            255,
+            45,
+            85
+        )
 
     SliderFill.Parent =
         SliderBar
 
-    Instance.new("UICorner", SliderFill).CornerRadius =
+    Instance.new(
+        "UICorner",
+        SliderFill
+    ).CornerRadius =
         UDim.new(1, 0)
 
     local dragging = false
@@ -1553,18 +2223,30 @@ local function createSlider(
 
         local pct =
             math.clamp(
-                posX / SliderBar.AbsoluteSize.X,
+                posX
+                / SliderBar.AbsoluteSize.X,
                 0,
                 1
             )
 
         SliderFill.Size =
-            UDim2.new(pct, 0, 1, 0)
+            UDim2.new(
+                pct,
+                0,
+                1,
+                0
+            )
 
         local value =
             math.floor(
                 minVal
-                + (pct * (maxVal - minVal))
+                + (
+                    pct
+                    * (
+                        maxVal
+                        - minVal
+                    )
+                )
             )
 
         SLabel.Text =
@@ -1579,52 +2261,52 @@ local function createSlider(
             if sRef.Label == SLabel then
                 sRef.CurrentVal = value
             end
-
         end
 
         callback(value)
-
     end
 
-    SliderBar.InputBegan:Connect(function(input)
+    SliderBar.InputBegan:Connect(
+        function(input)
 
-        if input.UserInputType
-            == Enum.UserInputType.MouseButton1 then
+            if input.UserInputType
+                == Enum.UserInputType.MouseButton1 then
 
-            dragging = true
-            updateInput(input)
+                dragging = true
 
+                updateInput(input)
+            end
         end
+    )
 
-    end)
+    UserInputService.InputEnded:Connect(
+        function(input)
 
-    UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType
+                == Enum.UserInputType.MouseButton1 then
 
-        if input.UserInputType
-            == Enum.UserInputType.MouseButton1 then
-
-            dragging = false
-
+                dragging = false
+            end
         end
+    )
 
-    end)
+    UserInputService.InputChanged:Connect(
+        function(input)
 
-    UserInputService.InputChanged:Connect(function(input)
+            if dragging
+                and input.UserInputType
+                == Enum.UserInputType.MouseMovement then
 
-        if dragging
-            and input.UserInputType
-            == Enum.UserInputType.MouseMovement then
-
-            updateInput(input)
-
+                updateInput(input)
+            end
         end
-
-    end)
+    )
 end
 
 --------------------------------------------------------------------
--- 📌 เพิ่ม Features ลง Main
+-- 📌 Main Features
 --------------------------------------------------------------------
+
 createFeatureRow(
     "ESP",
     "ESP",
@@ -1661,14 +2343,16 @@ createSlider(
     350,
     Settings.JumpPowerVal,
     function(val)
+
         Settings.JumpPowerVal = val
     end,
     MainContainer
 )
 
 --------------------------------------------------------------------
--- 📌 Teleport
+-- 📌 Teleport Buttons
 --------------------------------------------------------------------
+
 for _, loc in ipairs(
     TeleportLocations
 ) do
@@ -1677,10 +2361,19 @@ for _, loc in ipairs(
         Instance.new("TextButton")
 
     TpBtn.Size =
-        UDim2.new(1, -10, 0, 36)
+        UDim2.new(
+            1,
+            -10,
+            0,
+            36
+        )
 
     TpBtn.BackgroundColor3 =
-        Color3.fromRGB(28, 28, 38)
+        Color3.fromRGB(
+            28,
+            28,
+            38
+        )
 
     TpBtn.Text =
         loc.Name
@@ -1689,58 +2382,86 @@ for _, loc in ipairs(
         loc.Color
 
     TpBtn.TextSize = 13
-    TpBtn.Font = Enum.Font.GothamSemibold
+
+    TpBtn.Font =
+        Enum.Font.GothamSemibold
 
     TpBtn.Parent =
         TeleportContainer
 
-    Instance.new("UICorner", TpBtn).CornerRadius =
+    Instance.new(
+        "UICorner",
+        TpBtn
+    ).CornerRadius =
         UDim.new(0, 6)
 
-    TpBtn.MouseButton1Click:Connect(function()
+    TpBtn.MouseButton1Click:Connect(
+        function()
 
-        local character =
-            LocalPlayer.Character
+            local character =
+                LocalPlayer.Character
 
-        if character
-            and character:FindFirstChild(
-                "HumanoidRootPart"
-            ) then
+            if character
+                and character:FindFirstChild(
+                    "HumanoidRootPart"
+                ) then
 
-            character.HumanoidRootPart.CFrame =
-                loc.CFrame
-
+                character.HumanoidRootPart.CFrame =
+                    loc.CFrame
+            end
         end
-
-    end)
+    )
 end
 
 --------------------------------------------------------------------
--- 📌 5. Other
+-- 📌 Other - Language
 --------------------------------------------------------------------
+
 local LangRow =
     Instance.new("Frame")
 
 LangRow.Size =
-    UDim2.new(1, -10, 0, 45)
+    UDim2.new(
+        1,
+        -10,
+        0,
+        45
+    )
 
 LangRow.BackgroundColor3 =
-    Color3.fromRGB(26, 26, 34)
+    Color3.fromRGB(
+        26,
+        26,
+        34
+    )
 
 LangRow.Parent =
     OtherContainer
 
-Instance.new("UICorner", LangRow).CornerRadius =
+Instance.new(
+    "UICorner",
+    LangRow
+).CornerRadius =
     UDim.new(0, 6)
 
 local LangLabelRef =
     Instance.new("TextLabel")
 
 LangLabelRef.Size =
-    UDim2.new(0, 150, 1, 0)
+    UDim2.new(
+        0,
+        150,
+        1,
+        0
+    )
 
 LangLabelRef.Position =
-    UDim2.new(0, 12, 0, 0)
+    UDim2.new(
+        0,
+        12,
+        0,
+        0
+    )
 
 LangLabelRef.BackgroundTransparency = 1
 
@@ -1748,9 +2469,14 @@ LangLabelRef.Text =
     LangText[CurrentLanguage].LangToggle
 
 LangLabelRef.TextColor3 =
-    Color3.fromRGB(220, 220, 230)
+    Color3.fromRGB(
+        220,
+        220,
+        230
+    )
 
 LangLabelRef.TextSize = 13
+
 LangLabelRef.Font =
     Enum.Font.GothamSemibold
 
@@ -1772,58 +2498,101 @@ local LangBtn =
     Instance.new("TextButton")
 
 LangBtn.Size =
-    UDim2.new(0, 110, 0, 26)
+    UDim2.new(
+        0,
+        110,
+        0,
+        26
+    )
 
 LangBtn.Position =
-    UDim2.new(1, -120, 0.5, -13)
+    UDim2.new(
+        1,
+        -120,
+        0.5,
+        -13
+    )
 
 LangBtn.BackgroundColor3 =
-    Color3.fromRGB(38, 38, 50)
+    Color3.fromRGB(
+        38,
+        38,
+        50
+    )
 
 LangBtn.Text =
-    (CurrentLanguage == "TH")
-    and "ไทย"
-    or "English"
+    "ไทย"
 
 LangBtn.TextColor3 =
-    Color3.fromRGB(255, 255, 255)
+    Color3.fromRGB(
+        255,
+        255,
+        255
+    )
 
 LangBtn.TextSize = 11
+
 LangBtn.Font =
     Enum.Font.GothamBold
 
 LangBtn.Parent =
     LangRow
 
-Instance.new("UICorner", LangBtn).CornerRadius =
+Instance.new(
+    "UICorner",
+    LangBtn
+).CornerRadius =
     UDim.new(0, 4)
 
 --------------------------------------------------------------------
 -- Menu Key
 --------------------------------------------------------------------
+
 local MenuKeyRow =
     Instance.new("Frame")
 
 MenuKeyRow.Size =
-    UDim2.new(1, -10, 0, 45)
+    UDim2.new(
+        1,
+        -10,
+        0,
+        45
+    )
 
 MenuKeyRow.BackgroundColor3 =
-    Color3.fromRGB(26, 26, 34)
+    Color3.fromRGB(
+        26,
+        26,
+        34
+    )
 
 MenuKeyRow.Parent =
     OtherContainer
 
-Instance.new("UICorner", MenuKeyRow).CornerRadius =
+Instance.new(
+    "UICorner",
+    MenuKeyRow
+).CornerRadius =
     UDim.new(0, 6)
 
 local MenuKeyLabel =
     Instance.new("TextLabel")
 
 MenuKeyLabel.Size =
-    UDim2.new(0, 150, 1, 0)
+    UDim2.new(
+        0,
+        150,
+        1,
+        0
+    )
 
 MenuKeyLabel.Position =
-    UDim2.new(0, 12, 0, 0)
+    UDim2.new(
+        0,
+        12,
+        0,
+        0
+    )
 
 MenuKeyLabel.BackgroundTransparency = 1
 
@@ -1831,9 +2600,14 @@ MenuKeyLabel.Text =
     LangText[CurrentLanguage].MenuKey
 
 MenuKeyLabel.TextColor3 =
-    Color3.fromRGB(220, 220, 230)
+    Color3.fromRGB(
+        220,
+        220,
+        230
+    )
 
 MenuKeyLabel.TextSize = 13
+
 MenuKeyLabel.Font =
     Enum.Font.GothamSemibold
 
@@ -1855,72 +2629,123 @@ local MenuKeyBtn =
     Instance.new("TextButton")
 
 MenuKeyBtn.Size =
-    UDim2.new(0, 110, 0, 26)
+    UDim2.new(
+        0,
+        110,
+        0,
+        26
+    )
 
 MenuKeyBtn.Position =
-    UDim2.new(1, -120, 0.5, -13)
+    UDim2.new(
+        1,
+        -120,
+        0.5,
+        -13
+    )
 
 MenuKeyBtn.BackgroundColor3 =
-    Color3.fromRGB(38, 38, 50)
+    Color3.fromRGB(
+        38,
+        38,
+        50
+    )
 
 MenuKeyBtn.Text =
-    "[" .. Settings.MenuToggleKey.Name .. "]"
+    "[" ..
+    Settings.MenuToggleKey.Name ..
+    "]"
 
 MenuKeyBtn.TextColor3 =
-    Color3.fromRGB(180, 180, 200)
+    Color3.fromRGB(
+        180,
+        180,
+        200
+    )
 
 MenuKeyBtn.TextSize = 11
+
 MenuKeyBtn.Font =
     Enum.Font.GothamBold
 
 MenuKeyBtn.Parent =
     MenuKeyRow
 
-Instance.new("UICorner", MenuKeyBtn).CornerRadius =
+Instance.new(
+    "UICorner",
+    MenuKeyBtn
+).CornerRadius =
     UDim.new(0, 4)
 
-MenuKeyBtn.MouseButton1Click:Connect(function()
+MenuKeyBtn.MouseButton1Click:Connect(
+    function()
 
-    if listeningFeature == nil
-        and not listeningMenuKey then
+        if listeningFeature == nil
+            and not listeningMenuKey then
 
-        listeningMenuKey = true
+            listeningMenuKey = true
 
-        MenuKeyBtn.Text = "..."
+            MenuKeyBtn.Text = "..."
 
-        MenuKeyBtn.TextColor3 =
-            Color3.fromRGB(255, 200, 0)
-
+            MenuKeyBtn.TextColor3 =
+                Color3.fromRGB(
+                    255,
+                    200,
+                    0
+                )
+        end
     end
-
-end)
+)
 
 --------------------------------------------------------------------
 -- 📌 ESP Color
 --------------------------------------------------------------------
+
 local ESPColorRow =
     Instance.new("Frame")
 
 ESPColorRow.Size =
-    UDim2.new(1, -10, 0, 45)
+    UDim2.new(
+        1,
+        -10,
+        0,
+        45
+    )
 
 ESPColorRow.BackgroundColor3 =
-    Color3.fromRGB(26, 26, 34)
+    Color3.fromRGB(
+        26,
+        26,
+        34
+    )
 
 ESPColorRow.Parent =
     OtherContainer
 
-Instance.new("UICorner", ESPColorRow).CornerRadius =
+Instance.new(
+    "UICorner",
+    ESPColorRow
+).CornerRadius =
     UDim.new(0, 6)
 
 local ESPColorLabel =
     Instance.new("TextLabel")
 
 ESPColorLabel.Size =
-    UDim2.new(0, 150, 1, 0)
+    UDim2.new(
+        0,
+        150,
+        1,
+        0
+    )
 
 ESPColorLabel.Position =
-    UDim2.new(0, 12, 0, 0)
+    UDim2.new(
+        0,
+        12,
+        0,
+        0
+    )
 
 ESPColorLabel.BackgroundTransparency = 1
 
@@ -1928,9 +2753,14 @@ ESPColorLabel.Text =
     LangText[CurrentLanguage].ESPColor
 
 ESPColorLabel.TextColor3 =
-    Color3.fromRGB(220, 220, 230)
+    Color3.fromRGB(
+        220,
+        220,
+        230
+    )
 
 ESPColorLabel.TextSize = 13
+
 ESPColorLabel.Font =
     Enum.Font.GothamSemibold
 
@@ -1948,6 +2778,10 @@ table.insert(
     }
 )
 
+--------------------------------------------------------------------
+-- ⭐ ESP Color Modes
+--------------------------------------------------------------------
+
 local espColorModes = {
     "Red",
     "Gold",
@@ -1962,74 +2796,125 @@ local ESPColorBtn =
     Instance.new("TextButton")
 
 ESPColorBtn.Size =
-    UDim2.new(0, 110, 0, 26)
+    UDim2.new(
+        0,
+        110,
+        0,
+        26
+    )
 
 ESPColorBtn.Position =
-    UDim2.new(1, -120, 0.5, -13)
+    UDim2.new(
+        1,
+        -120,
+        0.5,
+        -13
+    )
 
 ESPColorBtn.BackgroundColor3 =
-    Color3.fromRGB(38, 38, 50)
+    Color3.fromRGB(
+        38,
+        38,
+        50
+    )
 
 ESPColorBtn.Text =
     Settings.ESPHighlightMode
 
 ESPColorBtn.TextColor3 =
-    Color3.fromRGB(255, 255, 255)
+    getEnemyColor()
 
 ESPColorBtn.TextSize = 11
+
 ESPColorBtn.Font =
     Enum.Font.GothamBold
 
 ESPColorBtn.Parent =
     ESPColorRow
 
-Instance.new("UICorner", ESPColorBtn).CornerRadius =
+Instance.new(
+    "UICorner",
+    ESPColorBtn
+).CornerRadius =
     UDim.new(0, 4)
 
-ESPColorBtn.MouseButton1Click:Connect(function()
+--------------------------------------------------------------------
+-- ⭐ เปลี่ยนสี ESP
+--------------------------------------------------------------------
 
-    espColorIndex =
-        espColorIndex % #espColorModes + 1
+ESPColorBtn.MouseButton1Click:Connect(
+    function()
 
-    Settings.ESPHighlightMode =
-        espColorModes[espColorIndex]
+        espColorIndex =
+            espColorIndex
+            % #espColorModes
+            + 1
 
-    ESPColorBtn.Text =
-        Settings.ESPHighlightMode
+        Settings.ESPHighlightMode =
+            espColorModes[
+                espColorIndex
+            ]
 
-    -- อัปเดตทั้ง Highlight และชื่อทันที
-    if Features.ESP.Enabled then
+        ESPColorBtn.Text =
+            Settings.ESPHighlightMode
+
+        ESPColorBtn.TextColor3 =
+            getEnemyColor()
+
+        -- ⭐ รีเฟรชทันที
         updateESP()
     end
-
-end)
+)
 
 --------------------------------------------------------------------
--- 📌 Menu Theme
+-- 📌 Theme
 --------------------------------------------------------------------
+
 local ThemeRow =
     Instance.new("Frame")
 
 ThemeRow.Size =
-    UDim2.new(1, -10, 0, 45)
+    UDim2.new(
+        1,
+        -10,
+        0,
+        45
+    )
 
 ThemeRow.BackgroundColor3 =
-    Color3.fromRGB(26, 26, 34)
+    Color3.fromRGB(
+        26,
+        26,
+        34
+    )
 
 ThemeRow.Parent =
     OtherContainer
 
-Instance.new("UICorner", ThemeRow).CornerRadius =
+Instance.new(
+    "UICorner",
+    ThemeRow
+).CornerRadius =
     UDim.new(0, 6)
 
 local ThemeLabel =
     Instance.new("TextLabel")
 
 ThemeLabel.Size =
-    UDim2.new(0, 150, 1, 0)
+    UDim2.new(
+        0,
+        150,
+        1,
+        0
+    )
 
 ThemeLabel.Position =
-    UDim2.new(0, 12, 0, 0)
+    UDim2.new(
+        0,
+        12,
+        0,
+        0
+    )
 
 ThemeLabel.BackgroundTransparency = 1
 
@@ -2037,9 +2922,14 @@ ThemeLabel.Text =
     LangText[CurrentLanguage].MenuTheme
 
 ThemeLabel.TextColor3 =
-    Color3.fromRGB(220, 220, 230)
+    Color3.fromRGB(
+        220,
+        220,
+        230
+    )
 
 ThemeLabel.TextSize = 13
+
 ThemeLabel.Font =
     Enum.Font.GothamSemibold
 
@@ -2064,16 +2954,32 @@ local themesList = {
         NameEN = "Black",
 
         MainColor =
-            Color3.fromRGB(18, 18, 24),
+            Color3.fromRGB(
+                18,
+                18,
+                24
+            ),
 
         SideColor =
-            Color3.fromRGB(14, 14, 18),
+            Color3.fromRGB(
+                14,
+                14,
+                18
+            ),
 
         RowColor =
-            Color3.fromRGB(26, 26, 34),
+            Color3.fromRGB(
+                26,
+                26,
+                34
+            ),
 
         TextColor =
-            Color3.fromRGB(220, 220, 230)
+            Color3.fromRGB(
+                220,
+                220,
+                230
+            )
     },
 
     {
@@ -2081,16 +2987,32 @@ local themesList = {
         NameEN = "White",
 
         MainColor =
-            Color3.fromRGB(235, 235, 240),
+            Color3.fromRGB(
+                235,
+                235,
+                240
+            ),
 
         SideColor =
-            Color3.fromRGB(210, 210, 215),
+            Color3.fromRGB(
+                210,
+                210,
+                215
+            ),
 
         RowColor =
-            Color3.fromRGB(255, 255, 255),
+            Color3.fromRGB(
+                255,
+                255,
+                255
+            ),
 
         TextColor =
-            Color3.fromRGB(30, 30, 35)
+            Color3.fromRGB(
+                30,
+                30,
+                35
+            )
     },
 
     {
@@ -2098,18 +3020,33 @@ local themesList = {
         NameEN = "Gold",
 
         MainColor =
-            Color3.fromRGB(45, 38, 15),
+            Color3.fromRGB(
+                45,
+                38,
+                15
+            ),
 
         SideColor =
-            Color3.fromRGB(28, 23, 8),
+            Color3.fromRGB(
+                28,
+                23,
+                8
+            ),
 
         RowColor =
-            Color3.fromRGB(65, 55, 22),
+            Color3.fromRGB(
+                65,
+                55,
+                22
+            ),
 
         TextColor =
-            Color3.fromRGB(255, 240, 200)
+            Color3.fromRGB(
+                255,
+                240,
+                200
+            )
     }
-
 }
 
 local currentThemeIndex = 1
@@ -2118,58 +3055,103 @@ local ThemeBtn =
     Instance.new("TextButton")
 
 ThemeBtn.Size =
-    UDim2.new(0, 110, 0, 26)
+    UDim2.new(
+        0,
+        110,
+        0,
+        26
+    )
 
 ThemeBtn.Position =
-    UDim2.new(1, -120, 0.5, -13)
+    UDim2.new(
+        1,
+        -120,
+        0.5,
+        -13
+    )
 
 ThemeBtn.BackgroundColor3 =
-    Color3.fromRGB(38, 38, 50)
+    Color3.fromRGB(
+        38,
+        38,
+        50
+    )
 
 ThemeBtn.Text =
-    (CurrentLanguage == "TH")
-    and themesList[currentThemeIndex].NameTH
-    or themesList[currentThemeIndex].NameEN
+    themesList[
+        currentThemeIndex
+    ].NameTH
 
 ThemeBtn.TextColor3 =
-    Color3.fromRGB(255, 255, 255)
+    Color3.fromRGB(
+        255,
+        255,
+        255
+    )
 
 ThemeBtn.TextSize = 11
+
 ThemeBtn.Font =
     Enum.Font.GothamBold
 
 ThemeBtn.Parent =
     ThemeRow
 
-Instance.new("UICorner", ThemeBtn).CornerRadius =
+Instance.new(
+    "UICorner",
+    ThemeBtn
+).CornerRadius =
     UDim.new(0, 4)
 
 --------------------------------------------------------------------
 -- Target Part
 --------------------------------------------------------------------
+
 local DropdownRow =
     Instance.new("Frame")
 
 DropdownRow.Size =
-    UDim2.new(1, -10, 0, 45)
+    UDim2.new(
+        1,
+        -10,
+        0,
+        45
+    )
 
 DropdownRow.BackgroundColor3 =
-    Color3.fromRGB(26, 26, 34)
+    Color3.fromRGB(
+        26,
+        26,
+        34
+    )
 
 DropdownRow.Parent =
     OtherContainer
 
-Instance.new("UICorner", DropdownRow).CornerRadius =
+Instance.new(
+    "UICorner",
+    DropdownRow
+).CornerRadius =
     UDim.new(0, 6)
 
 local TargetLabel =
     Instance.new("TextLabel")
 
 TargetLabel.Size =
-    UDim2.new(0, 150, 1, 0)
+    UDim2.new(
+        0,
+        150,
+        1,
+        0
+    )
 
 TargetLabel.Position =
-    UDim2.new(0, 12, 0, 0)
+    UDim2.new(
+        0,
+        12,
+        0,
+        0
+    )
 
 TargetLabel.BackgroundTransparency = 1
 
@@ -2177,9 +3159,14 @@ TargetLabel.Text =
     LangText[CurrentLanguage].TargetPart
 
 TargetLabel.TextColor3 =
-    Color3.fromRGB(220, 220, 230)
+    Color3.fromRGB(
+        220,
+        220,
+        230
+    )
 
 TargetLabel.TextSize = 13
+
 TargetLabel.Font =
     Enum.Font.GothamSemibold
 
@@ -2201,51 +3188,71 @@ local TargetBtn =
     Instance.new("TextButton")
 
 TargetBtn.Size =
-    UDim2.new(0, 110, 0, 26)
+    UDim2.new(
+        0,
+        110,
+        0,
+        26
+    )
 
 TargetBtn.Position =
-    UDim2.new(1, -120, 0.5, -13)
+    UDim2.new(
+        1,
+        -120,
+        0.5,
+        -13
+    )
 
 TargetBtn.BackgroundColor3 =
-    Color3.fromRGB(38, 38, 50)
+    Color3.fromRGB(
+        38,
+        38,
+        50
+    )
 
 TargetBtn.Text =
-    LangText[CurrentLanguage][
-        Settings.TargetPart == "Head"
-        and "Head"
-        or "Torso"
-    ]
+    LangText[CurrentLanguage].Head
 
 TargetBtn.TextColor3 =
-    Color3.fromRGB(255, 255, 255)
+    Color3.fromRGB(
+        255,
+        255,
+        255
+    )
 
 TargetBtn.TextSize = 11
+
 TargetBtn.Font =
     Enum.Font.GothamBold
 
 TargetBtn.Parent =
     DropdownRow
 
-Instance.new("UICorner", TargetBtn).CornerRadius =
+Instance.new(
+    "UICorner",
+    TargetBtn
+).CornerRadius =
     UDim.new(0, 4)
 
 --------------------------------------------------------------------
--- Language UI
+-- Language Update
 --------------------------------------------------------------------
+
 local function updateLanguageUI()
 
     TitleLabel.Text =
-        LangText[CurrentLanguage].HubTitle
+        LangText[
+            CurrentLanguage
+        ].HubTitle
 
     for _, tRef in ipairs(
         tabButtonReferences
     ) do
 
         tRef.Btn.Text =
-            LangText[CurrentLanguage][
-                tRef.Key
-            ]
-
+            LangText[
+                CurrentLanguage
+            ][tRef.Key]
     end
 
     for _, lRef in ipairs(
@@ -2253,66 +3260,72 @@ local function updateLanguageUI()
     ) do
 
         lRef.Label.Text =
-            LangText[CurrentLanguage][
-                lRef.Key
-            ]
-
+            LangText[
+                CurrentLanguage
+            ][lRef.Key]
     end
 
     for _, sRef in ipairs(
         sliderReferences
     ) do
 
-        local baseKey = sRef.Key
-
         sRef.Label.Text =
-            LangText[CurrentLanguage][baseKey]
+            LangText[
+                CurrentLanguage
+            ][sRef.Key]
             .. ": "
-            .. tostring(sRef.CurrentVal)
-
+            .. tostring(
+                sRef.CurrentVal
+            )
     end
 
     local activeTheme =
-        themesList[currentThemeIndex]
+        themesList[
+            currentThemeIndex
+        ]
 
     ThemeBtn.Text =
-        (CurrentLanguage == "TH")
+        CurrentLanguage == "TH"
         and activeTheme.NameTH
         or activeTheme.NameEN
 
     if Settings.TargetPart == "Head" then
 
         TargetBtn.Text =
-            LangText[CurrentLanguage].Head
+            LangText[
+                CurrentLanguage
+            ].Head
 
     else
 
         TargetBtn.Text =
-            LangText[CurrentLanguage].Torso
-
+            LangText[
+                CurrentLanguage
+            ].Torso
     end
 
     LangBtn.Text =
-        (CurrentLanguage == "TH")
+        CurrentLanguage == "TH"
         and "ไทย"
         or "English"
-
 end
 
-LangBtn.MouseButton1Click:Connect(function()
+LangBtn.MouseButton1Click:Connect(
+    function()
 
-    CurrentLanguage =
-        (CurrentLanguage == "TH")
-        and "EN"
-        or "TH"
+        CurrentLanguage =
+            CurrentLanguage == "TH"
+            and "EN"
+            or "TH"
 
-    updateLanguageUI()
-
-end)
+        updateLanguageUI()
+    end
+)
 
 --------------------------------------------------------------------
--- Theme Colors
+-- Theme Apply
 --------------------------------------------------------------------
+
 local function updateAllThemeColors(
     selectedTheme
 )
@@ -2340,11 +3353,12 @@ local function updateAllThemeColors(
                     child:GetChildren()
                 ) do
 
-                    if subChild:IsA("TextLabel") then
+                    if subChild:IsA(
+                        "TextLabel"
+                    ) then
 
                         subChild.TextColor3 =
                             selectedTheme.TextColor
-
                     end
                 end
             end
@@ -2362,89 +3376,129 @@ local function updateAllThemeColors(
     applyThemeToContainer(
         TeleportContainer
     )
-
 end
 
-ThemeBtn.MouseButton1Click:Connect(function()
+ThemeBtn.MouseButton1Click:Connect(
+    function()
 
-    currentThemeIndex =
-        currentThemeIndex % #themesList + 1
+        currentThemeIndex =
+            currentThemeIndex
+            % #themesList
+            + 1
 
-    local selectedTheme =
-        themesList[currentThemeIndex]
+        local selectedTheme =
+            themesList[
+                currentThemeIndex
+            ]
 
-    ThemeBtn.Text =
-        (CurrentLanguage == "TH")
-        and selectedTheme.NameTH
-        or selectedTheme.NameEN
+        ThemeBtn.Text =
+            CurrentLanguage == "TH"
+            and selectedTheme.NameTH
+            or selectedTheme.NameEN
 
-    updateAllThemeColors(
-        selectedTheme
-    )
-
-end)
+        updateAllThemeColors(
+            selectedTheme
+        )
+    end
+)
 
 --------------------------------------------------------------------
 -- Target Part Button
 --------------------------------------------------------------------
-TargetBtn.MouseButton1Click:Connect(function()
 
-    if Settings.TargetPart == "Head" then
+TargetBtn.MouseButton1Click:Connect(
+    function()
 
-        Settings.TargetPart =
-            "HumanoidRootPart"
+        if Settings.TargetPart
+            == "Head" then
 
-        TargetBtn.Text =
-            LangText[CurrentLanguage].Torso
+            Settings.TargetPart =
+                "HumanoidRootPart"
 
-    else
+            TargetBtn.Text =
+                LangText[
+                    CurrentLanguage
+                ].Torso
 
-        Settings.TargetPart =
-            "Head"
+        else
 
-        TargetBtn.Text =
-            LangText[CurrentLanguage].Head
+            Settings.TargetPart =
+                "Head"
 
+            TargetBtn.Text =
+                LangText[
+                    CurrentLanguage
+                ].Head
+        end
     end
-
-end)
+)
 
 --------------------------------------------------------------------
 -- FOV Color
 --------------------------------------------------------------------
+
 local ColorRow =
     Instance.new("Frame")
 
 ColorRow.Size =
-    UDim2.new(1, -10, 0, 45)
+    UDim2.new(
+        1,
+        -10,
+        0,
+        45
+    )
 
 ColorRow.BackgroundColor3 =
-    Color3.fromRGB(26, 26, 34)
+    Color3.fromRGB(
+        26,
+        26,
+        34
+    )
 
 ColorRow.Parent =
     OtherContainer
 
-Instance.new("UICorner", ColorRow).CornerRadius =
+Instance.new(
+    "UICorner",
+    ColorRow
+).CornerRadius =
     UDim.new(0, 6)
 
 local ColorLabel =
     Instance.new("TextLabel")
 
 ColorLabel.Size =
-    UDim2.new(0, 150, 1, 0)
+    UDim2.new(
+        0,
+        150,
+        1,
+        0
+    )
 
 ColorLabel.Position =
-    UDim2.new(0, 12, 0, 0)
+    UDim2.new(
+        0,
+        12,
+        0,
+        0
+    )
 
 ColorLabel.BackgroundTransparency = 1
 
 ColorLabel.Text =
-    LangText[CurrentLanguage].FOVColor
+    LangText[
+        CurrentLanguage
+    ].FOVColor
 
 ColorLabel.TextColor3 =
-    Color3.fromRGB(220, 220, 230)
+    Color3.fromRGB(
+        220,
+        220,
+        230
+    )
 
 ColorLabel.TextSize = 13
+
 ColorLabel.Font =
     Enum.Font.GothamSemibold
 
@@ -2466,58 +3520,63 @@ local colorsList = {
 
     {
         Name = "White",
-        Color = Color3.fromRGB(
-            255,
-            255,
-            255
-        )
+        Color =
+            Color3.fromRGB(
+                255,
+                255,
+                255
+            )
     },
 
     {
         Name = "Red",
-        Color = Color3.fromRGB(
-            255,
-            50,
-            50
-        )
+        Color =
+            Color3.fromRGB(
+                255,
+                50,
+                50
+            )
     },
 
     {
         Name = "Green",
-        Color = Color3.fromRGB(
-            50,
-            255,
-            50
-        )
+        Color =
+            Color3.fromRGB(
+                50,
+                255,
+                50
+            )
     },
 
     {
         Name = "Blue",
-        Color = Color3.fromRGB(
-            50,
-            150,
-            255
-        )
+        Color =
+            Color3.fromRGB(
+                50,
+                150,
+                255
+            )
     },
 
     {
         Name = "Yellow",
-        Color = Color3.fromRGB(
-            255,
-            255,
-            50
-        )
+        Color =
+            Color3.fromRGB(
+                255,
+                255,
+                50
+            )
     },
 
     {
         Name = "Pink",
-        Color = Color3.fromRGB(
-            255,
-            105,
-            180
-        )
+        Color =
+            Color3.fromRGB(
+                255,
+                105,
+                180
+            )
     }
-
 }
 
 local currentColorIndex = 1
@@ -2526,58 +3585,88 @@ local ColorBtn =
     Instance.new("TextButton")
 
 ColorBtn.Size =
-    UDim2.new(0, 110, 0, 26)
+    UDim2.new(
+        0,
+        110,
+        0,
+        26
+    )
 
 ColorBtn.Position =
-    UDim2.new(1, -120, 0.5, -13)
+    UDim2.new(
+        1,
+        -120,
+        0.5,
+        -13
+    )
 
 ColorBtn.BackgroundColor3 =
-    Color3.fromRGB(38, 38, 50)
+    Color3.fromRGB(
+        38,
+        38,
+        50
+    )
 
 ColorBtn.Text =
-    colorsList[currentColorIndex].Name
+    colorsList[
+        currentColorIndex
+    ].Name
 
 ColorBtn.TextColor3 =
-    colorsList[currentColorIndex].Color
+    colorsList[
+        currentColorIndex
+    ].Color
 
 ColorBtn.TextSize = 11
+
 ColorBtn.Font =
     Enum.Font.GothamBold
 
 ColorBtn.Parent =
     ColorRow
 
-Instance.new("UICorner", ColorBtn).CornerRadius =
+Instance.new(
+    "UICorner",
+    ColorBtn
+).CornerRadius =
     UDim.new(0, 4)
 
-ColorBtn.MouseButton1Click:Connect(function()
+ColorBtn.MouseButton1Click:Connect(
+    function()
 
-    currentColorIndex =
-        currentColorIndex % #colorsList + 1
+        currentColorIndex =
+            currentColorIndex
+            % #colorsList
+            + 1
 
-    local selected =
-        colorsList[currentColorIndex]
+        local selected =
+            colorsList[
+                currentColorIndex
+            ]
 
-    ColorBtn.Text =
-        selected.Name
+        ColorBtn.Text =
+            selected.Name
 
-    ColorBtn.TextColor3 =
-        selected.Color
+        ColorBtn.TextColor3 =
+            selected.Color
 
-    Settings.FOVColor =
-        selected.Color
+        Settings.FOVColor =
+            selected.Color
 
-    updateFOVCircle()
-
-end)
+        updateFOVCircle()
+    end
+)
 
 --------------------------------------------------------------------
--- FOV Radius
+-- ⭐ FOV Radius
+-- เดิม 50 - 400
+-- ใหม่ 50 - 600
 --------------------------------------------------------------------
+
 createSlider(
     "FOVRadius",
     50,
-    400,
+    600,
     Settings.FOVRadius,
     function(val)
 
@@ -2585,7 +3674,6 @@ createSlider(
             val
 
         updateFOVCircle()
-
     end,
     OtherContainer
 )
@@ -2593,6 +3681,7 @@ createSlider(
 --------------------------------------------------------------------
 -- FOV Thickness
 --------------------------------------------------------------------
+
 createSlider(
     "FOVThickness",
     0,
@@ -2604,24 +3693,28 @@ createSlider(
             val
 
         updateFOVCircle()
-
     end,
     OtherContainer
 )
 
 --------------------------------------------------------------------
--- 📌 6. ระบบ Hotkey
+-- 📌 Hotkeys
 --------------------------------------------------------------------
+
 UserInputService.InputBegan:Connect(
-    function(input, gameProcessed)
+    function(
+        input,
+        gameProcessed
+    )
 
         if gameProcessed then
             return
         end
 
         ------------------------------------------------------------
-        -- Menu Key Listening
+        -- Menu Key
         ------------------------------------------------------------
+
         if listeningMenuKey then
 
             if input.UserInputType
@@ -2637,7 +3730,9 @@ UserInputService.InputBegan:Connect(
                         newKey
 
                     MenuKeyBtn.Text =
-                        "[" .. newKey.Name .. "]"
+                        "[" ..
+                        newKey.Name ..
+                        "]"
 
                     MenuKeyBtn.TextColor3 =
                         Color3.fromRGB(
@@ -2645,19 +3740,18 @@ UserInputService.InputBegan:Connect(
                             180,
                             200
                         )
-
                 end
 
                 listeningMenuKey = false
-
             end
 
             return
         end
 
         ------------------------------------------------------------
-        -- Feature Key Listening
+        -- Feature Key
         ------------------------------------------------------------
+
         if listeningFeature then
 
             if input.UserInputType
@@ -2670,7 +3764,6 @@ UserInputService.InputBegan:Connect(
 
                 if input.KeyCode
                     == Enum.KeyCode.Backspace
-
                     or input.KeyCode
                     == Enum.KeyCode.Delete then
 
@@ -2698,7 +3791,9 @@ UserInputService.InputBegan:Connect(
                             newKey
 
                         listeningFeature.KeyBtn.Text =
-                            "[" .. newKey.Name .. "]"
+                            "[" ..
+                            newKey.Name ..
+                            "]"
 
                         listeningFeature.KeyBtn.TextColor3 =
                             Color3.fromRGB(
@@ -2706,12 +3801,10 @@ UserInputService.InputBegan:Connect(
                                 180,
                                 200
                             )
-
                     end
                 end
 
                 listeningFeature = nil
-
             end
 
             return
@@ -2720,6 +3813,7 @@ UserInputService.InputBegan:Connect(
         ------------------------------------------------------------
         -- Menu Toggle
         ------------------------------------------------------------
+
         if input.KeyCode
             == Settings.MenuToggleKey then
 
@@ -2730,7 +3824,7 @@ UserInputService.InputBegan:Connect(
                 newState
 
             ChatHead.Visible =
-                newState
+                not newState
 
             return
         end
@@ -2738,6 +3832,7 @@ UserInputService.InputBegan:Connect(
         ------------------------------------------------------------
         -- Feature Hotkeys
         ------------------------------------------------------------
+
         if input.UserInputType
             == Enum.UserInputType.Keyboard then
 
@@ -2755,8 +3850,18 @@ UserInputService.InputBegan:Connect(
 
                     break
                 end
-
             end
         end
     end
 )
+
+--------------------------------------------------------------------
+-- 📌 เริ่มต้น
+--------------------------------------------------------------------
+
+updateFOVCircle()
+updateESP()
+
+print("Gane Inwza Hub Loaded")
+print("FOV Radius:", Settings.FOVRadius)
+print("ESP Color:", Settings.ESPHighlightMode)
