@@ -8,15 +8,68 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
 --------------------------------------------------------------------
+-- 📌 0. ระบบภาษา (Language Translation Table)
+--------------------------------------------------------------------
+local CurrentLanguage = "TH"
+
+local LangText = {
+    TH = {
+        HubTitle = "Gane inwza",
+        TabMain = "หน้าหลัก",
+        TabOther = "ตั้งค่าอื่นๆ",
+        TabTeleport = "เทเลพอร์ต",
+        ESP = "แสดงตำแหน่งผู้เล่น",
+        VehicleESP = "แสดงตำแหน่งยานพาหนะ",
+        Fullbright = "สว่างเต็มที่",
+        Aimlock = "ล็อกเป้าหมาย",
+        HighJump = "กระโดดสูง",
+        JumpPower = "ความสูงการกระโดด",
+        MenuTheme = "ธีมเมนู",
+        TargetPart = "ส่วนเป้าหมาย",
+        FOVColor = "สีวงกลม FOV",
+        FOVRadius = "รัศมีวงกลม FOV",
+        FOVThickness = "ความหนาวงกลม FOV",
+        Head = "ศีรษะ",
+        Torso = "ลำตัว",
+        LangToggle = "ภาษา",
+        MenuKey = "ปุ่มซ่อน/แสดงเมนู",
+        ESPColor = "สีไฮไลท์ศัตรู"
+    },
+    EN = {
+        HubTitle = "Gane inwza",
+        TabMain = "Main",
+        TabOther = "Other",
+        TabTeleport = "Teleport",
+        ESP = "Player ESP",
+        VehicleESP = "Vehicle ESP",
+        Fullbright = "Fullbright",
+        Aimlock = "Aimlock",
+        HighJump = "High Jump",
+        JumpPower = "Jump Power",
+        MenuTheme = "Menu Theme",
+        TargetPart = "Target Part",
+        FOVColor = "FOV Color",
+        FOVRadius = "FOV Radius",
+        FOVThickness = "FOV Thickness",
+        Head = "Head",
+        Torso = "Torso",
+        LangToggle = "Language",
+        MenuKey = "Menu Toggle Key",
+        ESPColor = "ESP Highlight Color"
+    }
+}
+
+--------------------------------------------------------------------
 -- 📌 1. ตารางตั้งค่าระบบ (Settings & Features Table)
 --------------------------------------------------------------------
 local Settings = {
     TargetPart = "Head",       
     FOVRadius = 150,            
-    FOVThickness = 2,            
+    FOVThickness = 2,           
     FOVColor = Color3.fromRGB(255, 255, 255),
     JumpPowerVal = 100,
-    BackgroundImageId = "rbxassetid://6031094678"
+    MenuToggleKey = Enum.KeyCode.Period,
+    ESPHighlightMode = "Red"
 }
 
 local Features = {
@@ -27,25 +80,65 @@ local Features = {
     HighJump = { Enabled = false, Key = Enum.KeyCode.T }
 }
 
+-- รายชื่อสถานที่สำหรับเทเลพอร์ต (อัปเดตพิกัด Terminus ใหม่แล้ว)
+local TeleportLocations = {
+    {Name = "Woodbury", CFrame = CFrame.new(5422.83496, 121.690323, 845.045776, -0.93676883, 4.93270811e-08, -0.349948823, 2.50095535e-08, 1, 7.40077155e-08, 0.349948823, 6.05760562e-08, -0.93676883), Color = Color3.fromRGB(255, 215, 0)},
+    {Name = "Prison", CFrame = CFrame.new(5410.80664, 133.174713, -3000.37769, 0.726467907, -4.40537313e-08, 0.687200427, -1.15541052e-08, 1, 7.63204113e-08, -0.687200427, -6.33843129e-08, 0.726467907), Color = Color3.fromRGB(255, 215, 0)},
+    {Name = "Alexandria", CFrame = CFrame.new(294.89, 116.93, -3882.18, 0.95680666, 9.53678807e-08, 0.290724993, -8.17336243e-08, 1, -5.90406835e-08, -0.290724993, 3.27285115e-08, 0.95680666), Color = Color3.fromRGB(255, 215, 0)},
+    {Name = "Terminus", CFrame = CFrame.new(646.30, 199.54, -394.81), Color = Color3.fromRGB(255, 215, 0)},
+    {Name = "Motel", CFrame = CFrame.new(1708.67249, 202.765594, -1383.53186, -0.129178688, -8.15396906e-09, -0.991621315, 1.25935751e-09, 1, -8.38692316e-09, 0.991621315, -2.33221753e-09, -0.129178688), Color = Color3.fromRGB(255, 255, 255)},
+    {Name = "Big Spot", CFrame = CFrame.new(1812.80127, 241.352448, 1038.34009, 0.0501040928, -7.84629535e-08, -0.998744011, -4.46389947e-08, 1, -8.0801037e-08, 0.998744011, 4.86313887e-08, 0.0501040928), Color = Color3.fromRGB(255, 255, 255)},
+    {Name = "Satellite Outpost", CFrame = CFrame.new(-1949.0907, 293.467255, 874.993469, -0.626684666, 3.98794171e-08, -0.779272974, 2.88530888e-09, 1, 4.88548189e-08, 0.779272974, 2.83681203e-08, -0.626684666), Color = Color3.fromRGB(255, 255, 255)},
+    {Name = "Keep Out!", CFrame = CFrame.new(4907.73682, 125.037056, -5001.58057, -0.998003185, -3.08994719e-09, -0.0631632134, 3.46047635e-09, 1, -1.03596904e-07, 0.0631632134, -1.0360862e-07, -0.998003185), Color = Color3.fromRGB(255, 255, 255)},
+    {Name = "PD", CFrame = CFrame.new(4812.92334, 123.837395, -1070.66711, 0.999272466, 1.90916261e-08, -0.0381381847, -2.14410338e-08, 1, -6.11934823e-08, 0.0381381847, 6.19666807e-08, 0.999272466), Color = Color3.fromRGB(255, 255, 255)}
+}
+
 _G.FriendColor  = Color3.fromRGB(0, 150, 255)
-_G.EnemyColor   = Color3.fromRGB(255, 0, 0)
 _G.VehicleColor = Color3.fromRGB(255, 170, 0)
-_G.UseTeamColor = true
+_G.UseTeamColor = false
 
-local originalJumpPower = 50
-local originalJumpHeight = 7.2
-local originalUseJumpPower = true
-
-local function saveOriginalValues(humanoid)
-    if humanoid then
-        originalUseJumpPower = humanoid.UseJumpPower
-        originalJumpPower = humanoid.JumpPower
-        originalJumpHeight = humanoid.JumpHeight
+local function getEnemyColor()
+    local mode = Settings.ESPHighlightMode
+    if mode == "Red" then
+        return Color3.fromRGB(255, 0, 0)
+    elseif mode == "Gold" then
+        return Color3.fromRGB(255, 215, 0)
+    elseif mode == "White" then
+        return Color3.fromRGB(255, 255, 255)
+    elseif mode == "Black" then
+        return Color3.fromRGB(15, 15, 15)
+    elseif mode == "Rainbow" then
+        local hue = math.clamp((tick() % 3) / 3, 0, 1)
+        return Color3.fromHSV(hue, 1, 1)
     end
+    return Color3.fromRGB(255, 0, 0)
 end
 
+local originalJumpPower = 50
+local originalUseJumpPower = true
+local hasSavedOriginalJump = false
+
+local function saveOriginalValues(humanoid)
+    if not humanoid or not humanoid:IsA("Humanoid") or hasSavedOriginalJump then
+        return
+    end
+
+    local success, useJumpPower, jumpPower = pcall(function()
+        return humanoid.UseJumpPower, humanoid.JumpPower
+    end)
+
+    if success and typeof(useJumpPower) == "boolean" and typeof(jumpPower) == "number" then
+        originalUseJumpPower = useJumpPower
+        originalJumpPower = jumpPower > 0 and jumpPower or 50
+    else
+        originalUseJumpPower = true
+        originalJumpPower = 50
+    end
+
+    hasSavedOriginalJump = true
+end
 --------------------------------------------------------------------
--- 📌 2. สร้าง UI FOV Circle
+-- 📌 2. สร้าง UI FOV Circle (กึ่งกลางจอเป๊ะ)
 --------------------------------------------------------------------
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
@@ -86,9 +179,12 @@ local function updateFOVCircle()
 end
 
 --------------------------------------------------------------------
--- 📌 3. ฟังก์ชันการทำงานของฟีเจอร์ต่างๆ (ESP, Aimlock, Fullbright, etc.)
+-- 📌 3. ฟังก์ชันการทำงานของฟีเจอร์ต่างๆ (ESP, Vehicle, Fullbright, Aimlock, HighJump)
 --------------------------------------------------------------------
-if game.CoreGui:FindFirstChild("ESP") then game.CoreGui.ESP:Destroy() end
+if game.CoreGui:FindFirstChild("ESP") then
+    game.CoreGui.ESP:Destroy()
+end
+
 local ESPHolder = Instance.new("Folder", game.CoreGui)
 ESPHolder.Name = "ESP"
 
@@ -115,7 +211,7 @@ local function getESPColor(v)
     elseif LocalPlayer.TeamColor and v.TeamColor and (LocalPlayer.TeamColor == v.TeamColor) then
         return _G.FriendColor
     else
-        return _G.EnemyColor
+        return getEnemyColor()
     end
 end
 
@@ -168,12 +264,18 @@ local function updateESP()
 end
 
 task.spawn(function()
-    while task.wait(0.1) do
-        if Features.ESP.Enabled then updateESP() end
+    while task.wait(0.05) do
+        if Features.ESP.Enabled then
+            updateESP()
+        end
     end
 end)
 
-if game.CoreGui:FindFirstChild("VehicleESP") then game.CoreGui.VehicleESP:Destroy() end
+-- Vehicle ESP
+if game.CoreGui:FindFirstChild("VehicleESP") then
+    game.CoreGui.VehicleESP:Destroy()
+end
+
 local VehicleHolder = Instance.new("Folder", game.CoreGui)
 VehicleHolder.Name = "VehicleESP"
 
@@ -200,14 +302,29 @@ local function trackSeat(seat)
         table.insert(cachedSeats, seat)
     end
 end
-for _, obj in pairs(Workspace:GetDescendants()) do trackSeat(obj) end
+
+for _, obj in pairs(Workspace:GetDescendants()) do
+    trackSeat(obj)
+end
+
 Workspace.DescendantAdded:Connect(trackSeat)
+Workspace.DescendantRemoving:Connect(function(obj)
+    local index = table.find(cachedSeats, obj)
+    if index then
+        table.remove(cachedSeats, index)
+        local tagGui = VehicleHolder:FindFirstChild(obj:GetDebugId())
+        if tagGui then tagGui:Destroy() end
+    end
+end)
 
 local function updateVehicleESP()
     if not Features.VehicleESP.Enabled then
-        for _, child in pairs(VehicleHolder:GetChildren()) do child.Enabled = false end
+        for _, child in pairs(VehicleHolder:GetChildren()) do
+            child.Enabled = false
+        end
         return
     end
+
     local myChar = LocalPlayer.Character
     local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
 
@@ -220,17 +337,20 @@ local function updateVehicleESP()
             if not Players:GetPlayerFromCharacter(vehicleModel) then
                 local debugId = seat:GetDebugId()
                 local tagGui = VehicleHolder:FindFirstChild(debugId)
+
                 if not tagGui then
                     tagGui = VehicleTagTemplate:Clone()
                     tagGui.Name = debugId
                     tagGui.Adornee = seat
                     tagGui.Parent = VehicleHolder
                 end
+
                 local distanceStr = ""
                 if myRoot then
                     local dist = math.floor((myRoot.Position - seat.Position).Magnitude)
                     distanceStr = " [" .. tostring(dist) .. "m]"
                 end
+
                 tagGui.Tag.Text = "🚗 " .. vehicleModel.Name .. distanceStr
                 tagGui.Enabled = true
             end
@@ -240,21 +360,30 @@ end
 
 task.spawn(function()
     while task.wait(0.2) do
-        if Features.VehicleESP.Enabled then updateVehicleESP() end
+        if Features.VehicleESP.Enabled then
+            updateVehicleESP()
+        end
     end
 end)
+
+-- Fullbright
+local function setBright()
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 14
+    Lighting.FogEnd = 100000
+    Lighting.GlobalShadows = false
+    Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+    Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+end
 
 RunService.RenderStepped:Connect(function()
     if Features.Fullbright.Enabled then
-        Lighting.Brightness = 2
-        Lighting.ClockTime = 14
-        Lighting.FogEnd = 100000
-        Lighting.GlobalShadows = false
-        Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
-        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        setBright()
     end
 end)
 
+-- Aimlock
+local currentTarget = nil
 local function getClosestTarget()
     local closestCharacter = nil
     local shortestDistance = Settings.FOVRadius
@@ -264,6 +393,7 @@ local function getClosestTarget()
         if player ~= LocalPlayer and player.Character then
             local targetPartObj = player.Character:FindFirstChild(Settings.TargetPart)
             local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+
             if targetPartObj and humanoid and humanoid.Health > 0 then
                 local screenPos, onScreen = Camera:WorldToViewportPoint(targetPartObj.Position)
                 if onScreen then
@@ -282,48 +412,61 @@ end
 
 RunService.RenderStepped:Connect(function()
     if Features.TargetLock.Enabled then
-        local currentTarget = getClosestTarget()
+        currentTarget = getClosestTarget()
         if currentTarget then
             local part = currentTarget:FindFirstChild(Settings.TargetPart)
-            if part then Camera.CFrame = CFrame.new(Camera.CFrame.Position, part.Position) end
-        end
-    end
-end)
-
-RunService.Stepped:Connect(function()
-    local char = LocalPlayer.Character
-    if char then
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            if Features.HighJump.Enabled then
-                humanoid.UseJumpPower = true
-                if humanoid.JumpPower ~= Settings.JumpPowerVal then humanoid.JumpPower = Settings.JumpPowerVal end
-            else
-                humanoid.UseJumpPower = originalUseJumpPower
-                humanoid.JumpPower = originalJumpPower
-                humanoid.JumpHeight = originalJumpHeight
+            if part then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, part.Position)
             end
         end
     end
 end)
 
-if LocalPlayer.Character then saveOriginalValues(LocalPlayer.Character:FindFirstChildOfClass("Humanoid")) end
-LocalPlayer.CharacterAdded:Connect(function(char)
-    task.wait(0.5)
-    saveOriginalValues(char:WaitForChild("Humanoid"))
+-- High Jump
+RunService.Stepped:Connect(function()
+    local char = LocalPlayer.Character
+    if char then
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            saveOriginalValues(humanoid)
+            if Features.HighJump.Enabled then
+                humanoid.UseJumpPower = true
+                if humanoid.JumpPower ~= Settings.JumpPowerVal then
+                    humanoid.JumpPower = Settings.JumpPowerVal
+                end
+            else
+                if humanoid.JumpPower == Settings.JumpPowerVal then
+                    humanoid.UseJumpPower = originalUseJumpPower
+                    humanoid.JumpPower = originalJumpPower
+                end
+            end
+        end
+    end
 end)
 
---------------------------------------------------------------------
--- 📌 4. สร้างหน้าต่าง GUI หลัก + Chat Head "G" + ระบบแยกแท็บซ้าย 2 อัน
---------------------------------------------------------------------
-if PlayerGui:FindFirstChild("GaneInwzaHub") then PlayerGui.GaneInwzaHub:Destroy() end
+LocalPlayer.CharacterAdded:Connect(function(char)
+    hasSavedOriginalJump = false
+    local humanoid = char:WaitForChild("Humanoid")
+    task.wait(0.5)
+    saveOriginalValues(humanoid)
+end)
 
+if LocalPlayer.Character then
+    local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        saveOriginalValues(humanoid)
+    end
+end
+
+--------------------------------------------------------------------
+-- 📌 4. สร้างหน้าต่าง GUI Hub หลัก (พร้อมปุ่มย่อ & กากบาท)
+--------------------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "GaneInwzaHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- ปุ่มตัว G (Chat Head)
+-- Chat Head เป็นรูปตัว "G"
 local ChatHead = Instance.new("TextButton")
 ChatHead.Name = "ChatHead"
 ChatHead.Size = UDim2.new(0, 48, 0, 48)
@@ -336,13 +479,13 @@ ChatHead.Font = Enum.Font.GothamBold
 ChatHead.Active = true
 ChatHead.Draggable = true
 ChatHead.Parent = ScreenGui
+
 Instance.new("UICorner", ChatHead).CornerRadius = UDim.new(1, 0)
 local ChatHeadStroke = Instance.new("UIStroke")
 ChatHeadStroke.Color = Color3.fromRGB(255, 45, 85)
 ChatHeadStroke.Thickness = 2.5
 ChatHeadStroke.Parent = ChatHead
 
--- หน้าต่างหลัก (MainFrame)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 560, 0, 400)
@@ -353,144 +496,185 @@ MainFrame.ClipsDescendants = true
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
+
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 ChatHead.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- 🖼️ รูปภาพพื้นหลังเมนูหลัก
-local BgImage = Instance.new("ImageLabel")
-BgImage.Name = "BackgroundImage"
-BgImage.Size = UDim2.new(1, 0, 1, 0)
-BgImage.BackgroundTransparency = 1
-BgImage.Image = Settings.BackgroundImageId
-BgImage.ScaleType = Enum.ScaleType.Crop
-BgImage.ImageTransparency = 0.4
-BgImage.ZIndex = 0
-BgImage.Parent = MainFrame
+-- ปุ่มควบคุมมุมขวาบนของ MainFrame (ย่อ "-" และ ปิด "X")
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 26, 0, 26)
+MinimizeBtn.Position = UDim2.new(1, -62, 0, 10)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+MinimizeBtn.Text = "-"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextSize = 14
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Parent = MainFrame
+Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 4)
 
--- เงาทับหลังรูป
-local BgOverlay = Instance.new("Frame")
-BgOverlay.Size = UDim2.new(1, 0, 1, 0)
-BgOverlay.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-BgOverlay.BackgroundTransparency = 0.3
-BgOverlay.ZIndex = 0
-BgOverlay.Parent = MainFrame
+MinimizeBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    ChatHead.Visible = true
+end)
 
--- แถบ Sidebar ด้านซ้าย
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -30, 0, 10)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 12
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = MainFrame
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
+
+-- ปุ่มปิด (X) เพื่อทำลายสคริปต์และปิดทุกฟีเจอร์ทั้งหมด
+CloseBtn.MouseButton1Click:Connect(function()
+    Features.ESP.Enabled = false
+    Features.VehicleESP.Enabled = false
+    Features.Fullbright.Enabled = false
+    Features.TargetLock.Enabled = false
+    Features.HighJump.Enabled = false
+    updateESP()
+    updateVehicleESP()
+    if game.CoreGui:FindFirstChild("ESP") then game.CoreGui.ESP:Destroy() end
+    if game.CoreGui:FindFirstChild("VehicleESP") then game.CoreGui.VehicleESP:Destroy() end
+    ScreenGui:Destroy()
+    if PlayerGui:FindFirstChild("FOVCircleGui") then PlayerGui.FOVCircleGui:Destroy() end
+end)
+
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 150, 1, 0)
-Sidebar.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
-Sidebar.BackgroundTransparency = 0.2
+Sidebar.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
 Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 1
 Sidebar.Parent = MainFrame
 
 local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
 TitleLabel.Size = UDim2.new(1, -20, 0, 40)
-TitleLabel.Position = UDim2.new(0, 15, 0, 15)
+TitleLabel.Position = UDim2.new(0, 15, 0, 10)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.ZIndex = 2
-TitleLabel.Text = "Gane inwza"
+TitleLabel.Text = LangText[CurrentLanguage].HubTitle
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize = 18
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Parent = Sidebar
 
---------------------------------------------------------------------
--- 📌 5. สร้าง Container แยกหน้า (Main Hacks & Menu Theme)
---------------------------------------------------------------------
-local ContainerMain = Instance.new("ScrollingFrame")
-ContainerMain.Name = "ContainerMain"
-ContainerMain.Size = UDim2.new(1, -165, 1, -20)
-ContainerMain.Position = UDim2.new(0, 155, 0, 10)
-ContainerMain.BackgroundTransparency = 1
-ContainerMain.BorderSizePixel = 0
-ContainerMain.ScrollBarThickness = 4
-ContainerMain.CanvasSize = UDim2.new(0, 0, 0, 420) -- กำหนดขนาดพื้นที่เลื่อนให้พอดีกับฟีเจอร์ทั้งหมด
-ContainerMain.Visible = true
-ContainerMain.ZIndex = 2
-ContainerMain.Parent = MainFrame
+local MainContainer = Instance.new("ScrollingFrame")
+MainContainer.Name = "MainContainer"
+MainContainer.Size = UDim2.new(1, -165, 1, -50)
+MainContainer.Position = UDim2.new(0, 155, 0, 45)
+MainContainer.BackgroundTransparency = 1
+MainContainer.BorderSizePixel = 0
+MainContainer.ScrollBarThickness = 4
+MainContainer.Visible = true
+MainContainer.Parent = MainFrame
 
-local UIList1 = Instance.new("UIListLayout")
-UIList1.SortOrder = Enum.SortOrder.LayoutOrder
-UIList1.Padding = UDim.new(0, 8)
-UIList1.Parent = ContainerMain
+local MainUIList = Instance.new("UIListLayout")
+MainUIList.SortOrder = Enum.SortOrder.LayoutOrder
+MainUIList.Padding = UDim.new(0, 8)
+MainUIList.Parent = MainContainer
 
-local ContainerTheme = Instance.new("ScrollingFrame")
-ContainerTheme.Name = "ContainerTheme"
-ContainerTheme.Size = UDim2.new(1, -165, 1, -20)
-ContainerTheme.Position = UDim2.new(0, 155, 0, 10)
-ContainerTheme.BackgroundTransparency = 1
-ContainerTheme.BorderSizePixel = 0
-ContainerTheme.ScrollBarThickness = 4
-ContainerTheme.CanvasSize = UDim2.new(0, 0, 0, 300)
-ContainerTheme.Visible = false
-ContainerTheme.ZIndex = 2
-ContainerTheme.Parent = MainFrame
+local OtherContainer = Instance.new("ScrollingFrame")
+OtherContainer.Name = "OtherContainer"
+OtherContainer.Size = UDim2.new(1, -165, 1, -50)
+OtherContainer.Position = UDim2.new(0, 155, 0, 45)
+OtherContainer.BackgroundTransparency = 1
+OtherContainer.BorderSizePixel = 0
+OtherContainer.ScrollBarThickness = 4
+OtherContainer.Visible = false
+OtherContainer.Parent = MainFrame
 
-local UIList2 = Instance.new("UIListLayout")
-UIList2.SortOrder = Enum.SortOrder.LayoutOrder
-UIList2.Padding = UDim.new(0, 8)
-UIList2.Parent = ContainerTheme
+local OtherUIList = Instance.new("UIListLayout")
+OtherUIList.SortOrder = Enum.SortOrder.LayoutOrder
+OtherUIList.Padding = UDim.new(0, 8)
+OtherUIList.Parent = OtherContainer
 
--- ปุ่มสลับแท็บที่ Sidebar
-local function createTabButton(name, posY, targetContainer)
+local TeleportContainer = Instance.new("ScrollingFrame")
+TeleportContainer.Name = "TeleportContainer"
+TeleportContainer.Size = UDim2.new(1, -165, 1, -50)
+TeleportContainer.Position = UDim2.new(0, 155, 0, 45)
+TeleportContainer.BackgroundTransparency = 1
+TeleportContainer.BorderSizePixel = 0
+TeleportContainer.ScrollBarThickness = 4
+TeleportContainer.Visible = false
+TeleportContainer.Parent = MainFrame
+
+local TeleportUIList = Instance.new("UIListLayout")
+TeleportUIList.SortOrder = Enum.SortOrder.LayoutOrder
+TeleportUIList.Padding = UDim.new(0, 8)
+TeleportUIList.Parent = TeleportContainer
+
+local tabButtonReferences = {}
+
+local function createTabButton(nameKey, order, targetContainer)
     local TabBtn = Instance.new("TextButton")
-    TabBtn.Size = UDim2.new(1, -20, 0, 38)
-    TabBtn.Position = UDim2.new(0, 10, 0, posY)
-    TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-    TabBtn.BackgroundTransparency = 0.5
-    TabBtn.Text = name
-    TabBtn.TextColor3 = Color3.fromRGB(200, 200, 210)
+    TabBtn.Name = "TabBtn_" .. nameKey
+    TabBtn.Size = UDim2.new(1, -20, 0, 36)
+    TabBtn.Position = UDim2.new(0, 10, 0, 55 + (order * 42))
+    TabBtn.BackgroundColor3 = (targetContainer.Visible) and Color3.fromRGB(38, 38, 50) or Color3.fromRGB(20, 20, 26)
+    TabBtn.Text = LangText[CurrentLanguage]["Tab" .. nameKey]
+    TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     TabBtn.TextSize = 13
-    TabBtn.Font = Enum.Font.GothamSemibold
-    TabBtn.ZIndex = 2
+    TabBtn.Font = Enum.Font.GothamBold
     TabBtn.Parent = Sidebar
     Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
-
+    
+    table.insert(tabButtonReferences, {Btn = TabBtn, Key = "Tab" .. nameKey})
+    
     TabBtn.MouseButton1Click:Connect(function()
-        ContainerMain.Visible = false
-        ContainerTheme.Visible = false
-        targetContainer.Visible = true
+        MainContainer.Visible = (targetContainer == MainContainer)
+        OtherContainer.Visible = (targetContainer == OtherContainer)
+        TeleportContainer.Visible = (targetContainer == TeleportContainer)
+        
+        for _, child in pairs(Sidebar:GetChildren()) do
+            if child:IsA("TextButton") and child ~= TitleLabel and child.Name ~= "LangBtn" then
+                child.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+            end
+        end
+        TabBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
     end)
 end
 
-createTabButton("🔥 Main Hacks", 70, ContainerMain)
-createTabButton("🎨 Menu Theme", 116, ContainerTheme)
+createTabButton("Main", 0, MainContainer)
+createTabButton("Other", 1, OtherContainer)
+createTabButton("Teleport", 2, TeleportContainer)
 
 local listeningFeature = nil
+local listeningMenuKey = false
+local localizedLabels = {}
 
--- ฟังก์ชันสร้างแถวฟีเจอร์สำหรับหน้าหลัก
-local function createFeatureRow(featureKey, displayName)
+local function createFeatureRow(featureKey, textKey, parentContainer)
     local data = Features[featureKey]
+
     local Row = Instance.new("Frame")
     Row.Size = UDim2.new(1, -10, 0, 45)
-    Row.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-    Row.BackgroundTransparency = 0.3
-    Row.ZIndex = 2
-    Row.Parent = ContainerMain
+    Row.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+    Row.Parent = parentContainer
+
     Instance.new("UICorner", Row).CornerRadius = UDim.new(0, 6)
 
     local Label = Instance.new("TextLabel")
     Label.Size = UDim2.new(1, -150, 1, 0)
     Label.Position = UDim2.new(0, 12, 0, 0)
     Label.BackgroundTransparency = 1
-    Label.ZIndex = 2
-    Label.Text = displayName
+    Label.Text = LangText[CurrentLanguage][textKey]
     Label.TextColor3 = Color3.fromRGB(220, 220, 230)
     Label.TextSize = 13
     Label.Font = Enum.Font.GothamSemibold
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Row
 
+    table.insert(localizedLabels, {Label = Label, Key = textKey})
+
     local KeyBtn = Instance.new("TextButton")
     KeyBtn.Size = UDim2.new(0, 65, 0, 26)
     KeyBtn.Position = UDim2.new(1, -125, 0.5, -13)
     KeyBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
-    KeyBtn.ZIndex = 2
     KeyBtn.Text = data.Key and ("[" .. data.Key.Name .. "]") or "[None]"
     KeyBtn.TextColor3 = Color3.fromRGB(180, 180, 200)
     KeyBtn.TextSize = 11
@@ -502,7 +686,6 @@ local function createFeatureRow(featureKey, displayName)
     SwitchBG.Size = UDim2.new(0, 44, 0, 22)
     SwitchBG.Position = UDim2.new(1, -54, 0.5, -11)
     SwitchBG.BackgroundColor3 = data.Enabled and Color3.fromRGB(255, 45, 85) or Color3.fromRGB(50, 50, 60)
-    SwitchBG.ZIndex = 2
     SwitchBG.Text = ""
     SwitchBG.AutoButtonColor = false
     SwitchBG.Parent = Row
@@ -512,37 +695,46 @@ local function createFeatureRow(featureKey, displayName)
     Dot.Size = UDim2.new(0, 16, 0, 16)
     Dot.Position = data.Enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
     Dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Dot.ZIndex = 2
     Dot.Parent = SwitchBG
     Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
 
-    SwitchBG.MouseButton1Click:Connect(function()
-        data.Enabled = not data.Enabled
-        if data.Enabled then
+    local function updateSwitchVisual(state)
+        data.Enabled = state
+        if state then
             SwitchBG.BackgroundColor3 = Color3.fromRGB(255, 45, 85)
             Dot:TweenPosition(UDim2.new(1, -19, 0.5, -8), "Out", "Quad", 0.15, true)
+            if featureKey == "ESP" then updateESP() end
+            if featureKey == "VehicleESP" then updateVehicleESP() end
         else
             SwitchBG.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
             Dot:TweenPosition(UDim2.new(0, 3, 0.5, -8), "Out", "Quad", 0.15, true)
+            if featureKey == "ESP" then updateESP() end
+            if featureKey == "VehicleESP" then updateVehicleESP() end
         end
         updateFOVCircle()
+    end
+
+    SwitchBG.MouseButton1Click:Connect(function()
+        updateSwitchVisual(not data.Enabled)
     end)
 
     KeyBtn.MouseButton1Click:Connect(function()
-        if listeningFeature == nil then
+        if listeningFeature == nil and not listeningMenuKey then
             listeningFeature = { KeyBtn = KeyBtn, FeatureKey = featureKey }
             KeyBtn.Text = "..."
             KeyBtn.TextColor3 = Color3.fromRGB(255, 200, 0)
         end
     end)
+
+    data.ToggleVisual = updateSwitchVisual
 end
 
-local function createSlider(title, minVal, maxVal, defaultVal, callback, parentContainer)
+local sliderReferences = {}
+
+local function createSlider(titleKey, minVal, maxVal, defaultVal, callback, parentContainer)
     local SliderRow = Instance.new("Frame")
     SliderRow.Size = UDim2.new(1, -10, 0, 50)
-    SliderRow.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-    SliderRow.BackgroundTransparency = 0.3
-    SliderRow.ZIndex = 2
+    SliderRow.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
     SliderRow.Parent = parentContainer
     Instance.new("UICorner", SliderRow).CornerRadius = UDim.new(0, 6)
 
@@ -550,19 +742,19 @@ local function createSlider(title, minVal, maxVal, defaultVal, callback, parentC
     SLabel.Size = UDim2.new(1, -24, 0, 20)
     SLabel.Position = UDim2.new(0, 12, 0, 4)
     SLabel.BackgroundTransparency = 1
-    SLabel.ZIndex = 2
-    SLabel.Text = title .. ": " .. tostring(defaultVal)
+    SLabel.Text = LangText[CurrentLanguage][titleKey] .. ": " .. tostring(defaultVal)
     SLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
     SLabel.TextSize = 12
     SLabel.Font = Enum.Font.GothamSemibold
     SLabel.TextXAlignment = Enum.TextXAlignment.Left
     SLabel.Parent = SliderRow
 
+    table.insert(sliderReferences, {Label = SLabel, Key = titleKey, CurrentVal = defaultVal})
+
     local SliderBar = Instance.new("Frame")
     SliderBar.Size = UDim2.new(1, -24, 0, 6)
     SliderBar.Position = UDim2.new(0, 12, 0, 32)
     SliderBar.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
-    SliderBar.ZIndex = 2
     SliderBar.Parent = SliderRow
     Instance.new("UICorner", SliderBar).CornerRadius = UDim.new(1, 0)
 
@@ -570,7 +762,6 @@ local function createSlider(title, minVal, maxVal, defaultVal, callback, parentC
     local startPct = (defaultVal - minVal) / (maxVal - minVal)
     SliderFill.Size = UDim2.new(startPct, 0, 1, 0)
     SliderFill.BackgroundColor3 = Color3.fromRGB(255, 45, 85)
-    SliderFill.ZIndex = 2
     SliderFill.Parent = SliderBar
     Instance.new("UICorner", SliderFill).CornerRadius = UDim.new(1, 0)
 
@@ -579,139 +770,406 @@ local function createSlider(title, minVal, maxVal, defaultVal, callback, parentC
         local posX = input.Position.X - SliderBar.AbsolutePosition.X
         local pct = math.clamp(posX / SliderBar.AbsoluteSize.X, 0, 1)
         SliderFill.Size = UDim2.new(pct, 0, 1, 0)
+        
         local value = math.floor(minVal + (pct * (maxVal - minVal)))
-        SLabel.Text = title .. ": " .. tostring(value)
+        SLabel.Text = LangText[CurrentLanguage][titleKey] .. ": " .. tostring(value)
+        
+        for _, sRef in ipairs(sliderReferences) do
+            if sRef.Label == SLabel then
+                sRef.CurrentVal = value
+            end
+        end
+        
         callback(value)
     end
 
     SliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true updateInput(input) end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            updateInput(input)
+        end
     end)
+
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
     end)
+
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then updateInput(input) end
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateInput(input)
+        end
     end)
 end
 
--- เพิ่มฟีเจอร์ลงในหน้า Main Hacks
-createFeatureRow("ESP", "Player ESP")
-createFeatureRow("VehicleESP", "Vehicle ESP")
-createFeatureRow("Fullbright", "Fullbright")
-createFeatureRow("TargetLock", "Aimlock")
-createFeatureRow("HighJump", "High Jump")
+-- เพิ่มฟีเจอร์ลง Main
+createFeatureRow("ESP", "ESP", MainContainer)
+createFeatureRow("VehicleESP", "VehicleESP", MainContainer)
+createFeatureRow("Fullbright", "Fullbright", MainContainer)
+createFeatureRow("TargetLock", "Aimlock", MainContainer)
+createFeatureRow("HighJump", "HighJump", MainContainer)
 
-createSlider("Jump Power (ความสูงกระโดด)", 50, 350, Settings.JumpPowerVal, function(val)
+createSlider("JumpPower", 50, 350, Settings.JumpPowerVal, function(val)
     Settings.JumpPowerVal = val
-end, ContainerMain)
+end, MainContainer)
 
 --------------------------------------------------------------------
--- 📌 6. ฟีเจอร์ตกแต่งธีมและเปลี่ยนรูปพื้นหลัง (อยู่ในแท็บ Menu Theme)
+-- 📌 เพิ่มปุ่มสถานที่เทเลพอร์ตลงในหมวด Teleport
 --------------------------------------------------------------------
-local ThemeHeader = Instance.new("TextLabel")
-ThemeHeader.Size = UDim2.new(1, -10, 0, 30)
-ThemeHeader.BackgroundTransparency = 1
-ThemeHeader.ZIndex = 2
-ThemeHeader.Text = "🎨 Background Themes"
-ThemeHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-ThemeHeader.TextSize = 14
-ThemeHeader.Font = Enum.Font.GothamBold
-ThemeHeader.TextXAlignment = Enum.TextXAlignment.Left
-ThemeHeader.Parent = ContainerTheme
+for _, loc in ipairs(TeleportLocations) do
+    local TpBtn = Instance.new("TextButton")
+    TpBtn.Size = UDim2.new(1, -10, 0, 36)
+    TpBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+    TpBtn.Text = loc.Name
+    TpBtn.TextColor3 = loc.Color
+    TpBtn.TextSize = 13
+    TpBtn.Font = Enum.Font.GothamSemibold
+    TpBtn.Parent = TeleportContainer
+    Instance.new("UICorner", TpBtn).CornerRadius = UDim.new(0, 6)
 
-local bgPresets = {
-    {Name = "Cyberpunk City", Id = "rbxassetid://6031094678"},
-    {Name = "Dark Nebula", Id = "rbxassetid://6023426915"},
-    {Name = "Abstract Waves", Id = "rbxassetid://6023426985"},
-    {Name = "Gaming Glow", Id = "rbxassetid://6034688975"}
-}
-
-for _, preset in ipairs(bgPresets) do
-    local PresetBtn = Instance.new("TextButton")
-    PresetBtn.Size = UDim2.new(1, -10, 0, 40)
-    PresetBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-    PresetBtn.BackgroundTransparency = 0.3
-    PresetBtn.ZIndex = 2
-    PresetBtn.Text = "🖼️ Theme: " .. preset.Name
-    PresetBtn.TextColor3 = Color3.fromRGB(220, 220, 230)
-    PresetBtn.TextSize = 12
-    PresetBtn.Font = Enum.Font.GothamSemibold
-    PresetBtn.Parent = ContainerTheme
-    Instance.new("UICorner", PresetBtn).CornerRadius = UDim.new(0, 6)
-
-    PresetBtn.MouseButton1Click:Connect(function()
-        BgImage.Image = preset.Id
+    TpBtn.MouseButton1Click:Connect(function()
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = loc.CFrame
+        end
     end)
 end
 
-createSlider("Background Opacity", 0, 10, 4, function(val)
-    BgImage.ImageTransparency = val / 10
-end, ContainerTheme)
+--------------------------------------------------------------------
+-- 📌 5. หมวด Other
+--------------------------------------------------------------------
+local LangRow = Instance.new("Frame")
+LangRow.Size = UDim2.new(1, -10, 0, 45)
+LangRow.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+LangRow.Parent = OtherContainer
+Instance.new("UICorner", LangRow).CornerRadius = UDim.new(0, 6)
 
---------------------------------------------------------------------
--- 📌 7. Aimlock Target & FOV Settings (หน้า Main Hacks เพิ่มเติม)
---------------------------------------------------------------------
+local LangLabelRef = Instance.new("TextLabel")
+LangLabelRef.Size = UDim2.new(0, 150, 1, 0)
+LangLabelRef.Position = UDim2.new(0, 12, 0, 0)
+LangLabelRef.BackgroundTransparency = 1
+LangLabelRef.Text = LangText[CurrentLanguage].LangToggle
+LangLabelRef.TextColor3 = Color3.fromRGB(220, 220, 230)
+LangLabelRef.TextSize = 13
+LangLabelRef.Font = Enum.Font.GothamSemibold
+LangLabelRef.TextXAlignment = Enum.TextXAlignment.Left
+LangLabelRef.Parent = LangRow
+
+table.insert(localizedLabels, {Label = LangLabelRef, Key = "LangToggle"})
+
+local LangBtn = Instance.new("TextButton")
+LangBtn.Size = UDim2.new(0, 110, 0, 26)
+LangBtn.Position = UDim2.new(1, -120, 0.5, -13)
+LangBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+LangBtn.Text = (CurrentLanguage == "TH") and "ไทย" or "English"
+LangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LangBtn.TextSize = 11
+LangBtn.Font = Enum.Font.GothamBold
+LangBtn.Parent = LangRow
+Instance.new("UICorner", LangBtn).CornerRadius = UDim.new(0, 4)
+
+local MenuKeyRow = Instance.new("Frame")
+MenuKeyRow.Size = UDim2.new(1, -10, 0, 45)
+MenuKeyRow.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+MenuKeyRow.Parent = OtherContainer
+Instance.new("UICorner", MenuKeyRow).CornerRadius = UDim.new(0, 6)
+
+local MenuKeyLabel = Instance.new("TextLabel")
+MenuKeyLabel.Size = UDim2.new(0, 150, 1, 0)
+MenuKeyLabel.Position = UDim2.new(0, 12, 0, 0)
+MenuKeyLabel.BackgroundTransparency = 1
+MenuKeyLabel.Text = LangText[CurrentLanguage].MenuKey
+MenuKeyLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+MenuKeyLabel.TextSize = 13
+MenuKeyLabel.Font = Enum.Font.GothamSemibold
+MenuKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+MenuKeyLabel.Parent = MenuKeyRow
+
+table.insert(localizedLabels, {Label = MenuKeyLabel, Key = "MenuKey"})
+
+local MenuKeyBtn = Instance.new("TextButton")
+MenuKeyBtn.Size = UDim2.new(0, 110, 0, 26)
+MenuKeyBtn.Position = UDim2.new(1, -120, 0.5, -13)
+MenuKeyBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+MenuKeyBtn.Text = "[" .. Settings.MenuToggleKey.Name .. "]"
+MenuKeyBtn.TextColor3 = Color3.fromRGB(180, 180, 200)
+MenuKeyBtn.TextSize = 11
+MenuKeyBtn.Font = Enum.Font.GothamBold
+MenuKeyBtn.Parent = MenuKeyRow
+Instance.new("UICorner", MenuKeyBtn).CornerRadius = UDim.new(0, 4)
+
+MenuKeyBtn.MouseButton1Click:Connect(function()
+    if listeningFeature == nil and not listeningMenuKey then
+        listeningMenuKey = true
+        MenuKeyBtn.Text = "..."
+        MenuKeyBtn.TextColor3 = Color3.fromRGB(255, 200, 0)
+    end
+end)
+
+local ESPColorRow = Instance.new("Frame")
+ESPColorRow.Size = UDim2.new(1, -10, 0, 45)
+ESPColorRow.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+ESPColorRow.Parent = OtherContainer
+Instance.new("UICorner", ESPColorRow).CornerRadius = UDim.new(0, 6)
+
+local ESPColorLabel = Instance.new("TextLabel")
+ESPColorLabel.Size = UDim2.new(0, 150, 1, 0)
+ESPColorLabel.Position = UDim2.new(0, 12, 0, 0)
+ESPColorLabel.BackgroundTransparency = 1
+ESPColorLabel.Text = LangText[CurrentLanguage].ESPColor
+ESPColorLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+ESPColorLabel.TextSize = 13
+ESPColorLabel.Font = Enum.Font.GothamSemibold
+ESPColorLabel.TextXAlignment = Enum.TextXAlignment.Left
+ESPColorLabel.Parent = ESPColorRow
+
+table.insert(localizedLabels, {Label = ESPColorLabel, Key = "ESPColor"})
+
+local espColorModes = {"Red", "Gold", "White", "Black", "Rainbow"}
+local espColorIndex = 1
+
+local ESPColorBtn = Instance.new("TextButton")
+ESPColorBtn.Size = UDim2.new(0, 110, 0, 26)
+ESPColorBtn.Position = UDim2.new(1, -120, 0.5, -13)
+ESPColorBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+ESPColorBtn.Text = Settings.ESPHighlightMode
+ESPColorBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPColorBtn.TextSize = 11
+ESPColorBtn.Font = Enum.Font.GothamBold
+ESPColorBtn.Parent = ESPColorRow
+Instance.new("UICorner", ESPColorBtn).CornerRadius = UDim.new(0, 4)
+
+ESPColorBtn.MouseButton1Click:Connect(function()
+    espColorIndex = espColorIndex % #espColorModes + 1
+    Settings.ESPHighlightMode = espColorModes[espColorIndex]
+    ESPColorBtn.Text = Settings.ESPHighlightMode
+    if Features.ESP.Enabled then
+        updateESP()
+    end
+end)
+
+local ThemeRow = Instance.new("Frame")
+ThemeRow.Size = UDim2.new(1, -10, 0, 45)
+ThemeRow.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+ThemeRow.Parent = OtherContainer
+Instance.new("UICorner", ThemeRow).CornerRadius = UDim.new(0, 6)
+
+local ThemeLabel = Instance.new("TextLabel")
+ThemeLabel.Size = UDim2.new(0, 150, 1, 0)
+ThemeLabel.Position = UDim2.new(0, 12, 0, 0)
+ThemeLabel.BackgroundTransparency = 1
+ThemeLabel.Text = LangText[CurrentLanguage].MenuTheme
+ThemeLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+ThemeLabel.TextSize = 13
+ThemeLabel.Font = Enum.Font.GothamSemibold
+ThemeLabel.TextXAlignment = Enum.TextXAlignment.Left
+ThemeLabel.Parent = ThemeRow
+
+table.insert(localizedLabels, {Label = ThemeLabel, Key = "MenuTheme"})
+
+local themesList = {
+    {NameTH = "ดำ", NameEN = "Black", MainColor = Color3.fromRGB(18, 18, 24), SideColor = Color3.fromRGB(14, 14, 18), RowColor = Color3.fromRGB(26, 26, 34), TextColor = Color3.fromRGB(220, 220, 230)},
+    {NameTH = "ขาว", NameEN = "White", MainColor = Color3.fromRGB(235, 235, 240), SideColor = Color3.fromRGB(210, 210, 215), RowColor = Color3.fromRGB(255, 255, 255), TextColor = Color3.fromRGB(30, 30, 35)},
+    {NameTH = "ทองสว่าง", NameEN = "Gold", MainColor = Color3.fromRGB(45, 38, 15), SideColor = Color3.fromRGB(28, 23, 8), RowColor = Color3.fromRGB(65, 55, 22), TextColor = Color3.fromRGB(255, 240, 200)}
+}
+local currentThemeIndex = 1
+
+local ThemeBtn = Instance.new("TextButton")
+ThemeBtn.Size = UDim2.new(0, 110, 0, 26)
+ThemeBtn.Position = UDim2.new(1, -120, 0.5, -13)
+ThemeBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+ThemeBtn.Text = (CurrentLanguage == "TH") and themesList[currentThemeIndex].NameTH or themesList[currentThemeIndex].NameEN
+ThemeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ThemeBtn.TextSize = 11
+ThemeBtn.Font = Enum.Font.GothamBold
+ThemeBtn.Parent = ThemeRow
+Instance.new("UICorner", ThemeBtn).CornerRadius = UDim.new(0, 4)
+
 local DropdownRow = Instance.new("Frame")
 DropdownRow.Size = UDim2.new(1, -10, 0, 45)
-DropdownRow.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-DropdownRow.BackgroundTransparency = 0.3
-DropdownRow.ZIndex = 2
-DropdownRow.Parent = ContainerMain
+DropdownRow.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+DropdownRow.Parent = OtherContainer
+Instance.new("UICorner", DropdownRow).CornerRadius = UDim.new(0, 6)
 
 local TargetLabel = Instance.new("TextLabel")
 TargetLabel.Size = UDim2.new(0, 150, 1, 0)
 TargetLabel.Position = UDim2.new(0, 12, 0, 0)
 TargetLabel.BackgroundTransparency = 1
-TargetLabel.ZIndex = 2
-TargetLabel.Text = "Target Part:"
+TargetLabel.Text = LangText[CurrentLanguage].TargetPart
 TargetLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
 TargetLabel.TextSize = 13
 TargetLabel.Font = Enum.Font.GothamSemibold
 TargetLabel.TextXAlignment = Enum.TextXAlignment.Left
 TargetLabel.Parent = DropdownRow
 
+table.insert(localizedLabels, {Label = TargetLabel, Key = "TargetPart"})
+
 local TargetBtn = Instance.new("TextButton")
 TargetBtn.Size = UDim2.new(0, 110, 0, 26)
 TargetBtn.Position = UDim2.new(1, -120, 0.5, -13)
 TargetBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
-TargetBtn.ZIndex = 2
-TargetBtn.Text = "Head (ศีรษะ)"
+TargetBtn.Text = LangText[CurrentLanguage][Settings.TargetPart == "Head" and "Head" or "Torso"]
 TargetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 TargetBtn.TextSize = 11
 TargetBtn.Font = Enum.Font.GothamBold
 TargetBtn.Parent = DropdownRow
 Instance.new("UICorner", TargetBtn).CornerRadius = UDim.new(0, 4)
 
+local function updateLanguageUI()
+    TitleLabel.Text = LangText[CurrentLanguage].HubTitle
+    
+    for _, tRef in ipairs(tabButtonReferences) do
+        tRef.Btn.Text = LangText[CurrentLanguage][tRef.Key]
+    end
+    
+    for _, lRef in ipairs(localizedLabels) do
+        lRef.Label.Text = LangText[CurrentLanguage][lRef.Key]
+    end
+    
+    for _, sRef in ipairs(sliderReferences) do
+        local baseKey = sRef.Key
+        sRef.Label.Text = LangText[CurrentLanguage][baseKey] .. ": " .. tostring(sRef.CurrentVal)
+    end
+    
+    local activeTheme = themesList[currentThemeIndex]
+    ThemeBtn.Text = (CurrentLanguage == "TH") and activeTheme.NameTH or activeTheme.NameEN
+    
+    if Settings.TargetPart == "Head" then
+        TargetBtn.Text = LangText[CurrentLanguage].Head
+    else
+        TargetBtn.Text = LangText[CurrentLanguage].Torso
+    end
+    
+    LangBtn.Text = (CurrentLanguage == "TH") and "ไทย" or "English"
+end
+
+LangBtn.MouseButton1Click:Connect(function()
+    CurrentLanguage = (CurrentLanguage == "TH") and "EN" or "TH"
+    updateLanguageUI()
+end)
+
+local function updateAllThemeColors(selectedTheme)
+    MainFrame.BackgroundColor3 = selectedTheme.MainColor
+    Sidebar.BackgroundColor3 = selectedTheme.SideColor
+    
+    local function applyThemeToContainer(container)
+        for _, child in pairs(container:GetChildren()) do
+            if child:IsA("Frame") then
+                child.BackgroundColor3 = selectedTheme.RowColor
+                for _, subChild in pairs(child:GetChildren()) do
+                    if subChild:IsA("TextLabel") then
+                        subChild.TextColor3 = selectedTheme.TextColor
+                    end
+                end
+            end
+        end
+    end
+    
+    applyThemeToContainer(MainContainer)
+    applyThemeToContainer(OtherContainer)
+    applyThemeToContainer(TeleportContainer)
+end
+
+ThemeBtn.MouseButton1Click:Connect(function()
+    currentThemeIndex = currentThemeIndex % #themesList + 1
+    local selectedTheme = themesList[currentThemeIndex]
+    ThemeBtn.Text = (CurrentLanguage == "TH") and selectedTheme.NameTH or selectedTheme.NameEN
+    updateAllThemeColors(selectedTheme)
+end)
+
 TargetBtn.MouseButton1Click:Connect(function()
     if Settings.TargetPart == "Head" then
         Settings.TargetPart = "HumanoidRootPart"
-        TargetBtn.Text = "Torso (ลำตัว)"
+        TargetBtn.Text = LangText[CurrentLanguage].Torso
     else
         Settings.TargetPart = "Head"
-        TargetBtn.Text = "Head (ศีรษะ)"
+        TargetBtn.Text = LangText[CurrentLanguage].Head
     end
 end)
 
-createSlider("FOV Radius (รัศมี)", 50, 400, Settings.FOVRadius, function(val)
+local ColorRow = Instance.new("Frame")
+ColorRow.Size = UDim2.new(1, -10, 0, 45)
+ColorRow.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+ColorRow.Parent = OtherContainer
+Instance.new("UICorner", ColorRow).CornerRadius = UDim.new(0, 6)
+
+local ColorLabel = Instance.new("TextLabel")
+ColorLabel.Size = UDim2.new(0, 150, 1, 0)
+ColorLabel.Position = UDim2.new(0, 12, 0, 0)
+ColorLabel.BackgroundTransparency = 1
+ColorLabel.Text = LangText[CurrentLanguage].FOVColor
+ColorLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+ColorLabel.TextSize = 13
+ColorLabel.Font = Enum.Font.GothamSemibold
+ColorLabel.TextXAlignment = Enum.TextXAlignment.Left
+ColorLabel.Parent = ColorRow
+
+table.insert(localizedLabels, {Label = ColorLabel, Key = "FOVColor"})
+
+local colorsList = {
+    {Name = "White", Color = Color3.fromRGB(255, 255, 255)},
+    {Name = "Red", Color = Color3.fromRGB(255, 50, 50)},
+    {Name = "Green", Color = Color3.fromRGB(50, 255, 50)},
+    {Name = "Blue", Color = Color3.fromRGB(50, 150, 255)},
+    {Name = "Yellow", Color = Color3.fromRGB(255, 255, 50)},
+    {Name = "Pink", Color = Color3.fromRGB(255, 105, 180)}
+}
+local currentColorIndex = 1
+
+local ColorBtn = Instance.new("TextButton")
+ColorBtn.Size = UDim2.new(0, 110, 0, 26)
+ColorBtn.Position = UDim2.new(1, -120, 0.5, -13)
+ColorBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 50)
+ColorBtn.Text = colorsList[currentColorIndex].Name
+ColorBtn.TextColor3 = colorsList[currentColorIndex].Color
+ColorBtn.TextSize = 11
+ColorBtn.Font = Enum.Font.GothamBold
+ColorBtn.Parent = ColorRow
+Instance.new("UICorner", ColorBtn).CornerRadius = UDim.new(0, 4)
+
+ColorBtn.MouseButton1Click:Connect(function()
+    currentColorIndex = currentColorIndex % #colorsList + 1
+    local selected = colorsList[currentColorIndex]
+    ColorBtn.Text = selected.Name
+    ColorBtn.TextColor3 = selected.Color
+    Settings.FOVColor = selected.Color
+    updateFOVCircle()
+end)
+
+createSlider("FOVRadius", 50, 400, Settings.FOVRadius, function(val)
     Settings.FOVRadius = val
     updateFOVCircle()
-end, ContainerMain)
+end, OtherContainer)
 
-createSlider("FOV Thickness (ความหนา)", 0, 10, Settings.FOVThickness, function(val)
+createSlider("FOVThickness", 0, 10, Settings.FOVThickness, function(val)
     Settings.FOVThickness = val
     updateFOVCircle()
-end, ContainerMain)
+end, OtherContainer)
 
 --------------------------------------------------------------------
--- 📌 8. ระบบ Hotkey & กดปุ่ม . ซ่อน/แสดง UI ทั้งหมด
+-- 📌 6. ระบบ Hotkey
 --------------------------------------------------------------------
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
 
+    if listeningMenuKey then
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            local newKey = input.KeyCode
+            if newKey ~= Enum.KeyCode.Unknown then
+                Settings.MenuToggleKey = newKey
+                MenuKeyBtn.Text = "[" .. newKey.Name .. "]"
+                MenuKeyBtn.TextColor3 = Color3.fromRGB(180, 180, 200)
+            end
+            listeningMenuKey = false
+        end
+        return
+    end
+
     if listeningFeature then
         if input.UserInputType == Enum.UserInputType.Keyboard then
             local featureData = Features[listeningFeature.FeatureKey]
+            
             if input.KeyCode == Enum.KeyCode.Backspace or input.KeyCode == Enum.KeyCode.Delete then
                 featureData.Key = nil
                 listeningFeature.KeyBtn.Text = "[None]"
@@ -729,7 +1187,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         return
     end
 
-    if input.KeyCode == Enum.KeyCode.Period then
+    if input.KeyCode == Settings.MenuToggleKey then
         local newState = not MainFrame.Visible
         MainFrame.Visible = newState
         ChatHead.Visible = newState
@@ -739,8 +1197,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if input.UserInputType == Enum.UserInputType.Keyboard then
         for _, featureData in pairs(Features) do
             if featureData.Key and input.KeyCode == featureData.Key then
-                featureData.Enabled = not featureData.Enabled
-                updateFOVCircle()
+                featureData.ToggleVisual(not featureData.Enabled)
                 break
             end
         end
